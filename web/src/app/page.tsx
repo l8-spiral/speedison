@@ -5,6 +5,7 @@ import { ParallaxLayer } from "@/components/effects/ParallaxLayer";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { StageChapter, PopsBangsChapter, EmissionsChapter, ExhaustChapter } from "@/components/chapter/chapters";
 import { PortfolioGallery } from "@/components/ui/PortfolioGallery";
+import { FAQ } from "@/components/ui/FAQ";
 
 export default function Home() {
   return (
@@ -26,6 +27,7 @@ export default function Home() {
       </section>
 
       <PortfolioGallery />
+      <FAQ />
     </main>
   );
 }
