@@ -1,4 +1,6 @@
-export const TOTAL_FRAMES = 450; // 30 fps × 15 s
+// Matches the count produced by scripts/extract-frames.mjs on the current
+// hero video (15.13 s × 30 fps ≈ 454). Update when the video changes (T45).
+export const TOTAL_FRAMES = 454;
 
 export const ACT_RANGES = {
   I:   { from: 0,    to: 1 / 3 },

@@ -6,7 +6,7 @@ export function HeroStatic() {
   return (
     <section className="relative h-screen w-full overflow-hidden bg-noir-900">
       <img
-        src={framePath(1280, 225)}
+        src={framePath(1280, 227)}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover opacity-90"
