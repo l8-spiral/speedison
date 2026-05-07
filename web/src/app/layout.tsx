@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { SmoothScroll } from "@/components/lenis/SmoothScroll";
 import { Navbar } from "@/components/ui/Navbar";
+import { Footer } from "@/components/ui/Footer";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="sv" className={`${display.variable} ${body.variable}`}>
       <body className="antialiased">
         <Navbar />
-        <SmoothScroll>{children}</SmoothScroll>
+        <SmoothScroll>
+          {children}
+          <Footer />
+        </SmoothScroll>
       </body>
     </html>
   );
