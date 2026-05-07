@@ -398,7 +398,7 @@ git commit -m "feat(web): theme tokens + serif/sans font system"
 
 ```bash
 cd web
-npm install gsap @studio-freight/lenis framer-motion howler
+npm install gsap lenis framer-motion howler   # NOTE: previously @studio-freight/lenis, now renamed to plain `lenis`
 npm install -D @types/howler
 ```
 
@@ -410,7 +410,7 @@ npm install zustand zod
 
 - [ ] **Step 3: Verify versions in `package.json`**
 
-Open `web/package.json`. Confirm `dependencies` includes: `gsap`, `@studio-freight/lenis`, `framer-motion`, `howler`, `zustand`, `zod`. `devDependencies` includes `@types/howler`.
+Open `web/package.json`. Confirm `dependencies` includes: `gsap`, `lenis`, `framer-motion`, `howler`, `zustand`, `zod`. `devDependencies` includes `@types/howler`.
 
 - [ ] **Step 4: Commit**
 
@@ -2014,7 +2014,7 @@ git commit -m "feat(web): ParallaxLayer dust particles in hero"
 ```tsx
 "use client";
 import { useEffect } from "react";
-import Lenis from "@studio-freight/lenis";
+import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
