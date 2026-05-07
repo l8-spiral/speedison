@@ -1,10 +1,12 @@
 # Speedison.se — Redesign Design Document
 
-**Datum:** 2026-05-07
+**Datum:** 2026-05-07 (rev. 2026-05-08 — Railway pivot)
 **Status:** Utkast för granskning
 **Repo:** https://github.com/l8-spiral/speedison.git
 **Domän:** speedison.se
 **Nuvarande:** WordPress hostad på Misshosting
+
+> **2026-05-08 ARKITEKTURREVISION:** Vi har bytt från hybrid-stack (Vercel frontend + Misshosting PHP/MySQL backend) till **enhetlig Railway-deploy** (Next.js + Prisma + MySQL i ett separat Railway-projekt) plus **Resend** för transaktionsmejl. PHP-backenden, GitHub Actions FTP-deploy, och Misshosting som backend-värd är borttagna. Misshosting används endast för domänregistrering/DNS och eventuellt MX för inkommande e-post (oförändrat). Berörda sektioner: §6, §10, §15, §17. Plan-uppgifter berörda: T9, T11, T33–T35, T43–T44.
 
 ---
 
@@ -54,37 +56,48 @@ Efter hero släpper sticky-scrollen. Varje tjänste-kapitel får sin egen fullsk
 
 ## 6. Arkitektur och stack
 
+Allt — frontend, API, databas — körs i ett **separat Railway-projekt** (egen instance, egen MySQL-plugin). Mejlnotifikationer via **Resend**. Inga separata Vercel-, Misshosting- eller PHP-deploys.
+
 ### Repostruktur
 
 ```
 speedison/
-├── web/                       Next.js, deployt till Vercel
+├── web/                              Next.js (Node-runtime, deployt till Railway)
 │   ├── src/app/
-│   │   ├── page.tsx           hero-scrub + storytelling
+│   │   ├── page.tsx                  hero-scrub + storytelling
 │   │   ├── konfigurator/
-│   │   └── kontakt/
+│   │   ├── kontakt/
+│   │   ├── tack/
+│   │   ├── integritet/
+│   │   └── api/
+│   │       ├── leads/route.ts        POST /api/leads (Next.js route handler)
+│   │       └── contact/route.ts      POST /api/contact
 │   ├── src/components/
 │   │   ├── hero-scrub/
-│   │   ├── effects/           cursor-spotlight, parallax, particles
+│   │   ├── effects/                  cursor-spotlight, parallax, particles
 │   │   ├── chapter/
 │   │   ├── configurator/
-│   │   └── ui/                21st.dev-wrappers
+│   │   └── ui/                       21st.dev-wrappers
 │   ├── src/lib/
-│   │   ├── pricing.ts         tjänster + prisspann (hårdkodat)
+│   │   ├── pricing.ts                tjänster + prisspann (hårdkodat)
 │   │   ├── content.ts
-│   │   └── api.ts
+│   │   ├── api.ts                    klient
+│   │   ├── prisma.ts                 PrismaClient singleton
+│   │   ├── mailer.ts                 Resend-wrapper
+│   │   └── ratelimit.ts              IP-hash + lead-räknare
+│   ├── prisma/
+│   │   ├── schema.prisma             Lead + Contact + IpRate models
+│   │   └── migrations/               Prisma migrate-historik
 │   └── public/
-│       ├── frames/            WebP-sekvens (~450 frames × 3 upplösningar)
-│       └── gallery/           kundbils-foton (hämtade från nuvarande sajt)
-├── api/                       PHP, deployt till Misshosting
-│   ├── leads.php
-│   ├── contact.php
-│   └── _shared/db.php
+│       ├── frames/                   WebP-sekvens (~450 frames × 3 upplösningar)
+│       └── gallery/                  kundbils-foton
 ├── docs/superpowers/specs/
 ├── scripts/
-│   └── extract-frames.sh      ffmpeg: video → WebP-sekvens
+│   ├── extract-frames.sh             ffmpeg: video → WebP-sekvens
+│   └── fetch-legacy-assets.sh        curl gamla sajten
+├── railway.json                      Railway build/deploy-konfig (root-cmd, healthcheck)
 └── .github/workflows/
-    └── deploy-api.yml         FTP-deploy api/ → Misshosting
+    └── ci.yml                        lint, test, lighthouse (deploy görs av Railway, inte Actions)
 ```
 
 ### Frontend-stack
@@ -96,52 +109,47 @@ speedison/
 - Canvas 2D (ren, ingen Three.js i v1) för cursor-spotlight och parallax-particles
 - 21st.dev-komponenter via deras MCP för navbar, footer, knappar, formulärfält, modals, accordions
 - Howler.js för ljudtoggle
-- Zod för klient- och server-validering
+- Zod för klient- och server-validering (samma schema delas mellan klient och route handler)
 - Zustand för global state (configurator, audio)
 
 ### Backend-stack
 
-- PHP 8 på Misshosting med PDO
-- MySQL för leads och contacts
-- `mail()` eller SMTP via Misshosting för notifikations-mejl till info@speedison.se
-- SPF/DKIM-records sätts upp hos Misshosting
+- **Next.js Route Handlers** (Node.js-runtime) för `/api/leads` och `/api/contact`
+- **Prisma ORM** för typad DB-åtkomst + automatiska migrations
+- **MySQL** som Railway-plugin i samma projekt (privat nätverk → ingen extern exponering)
+- **Resend** för transaktionsmejl (e-postnotis till `info@speedison.se` vid varje lead)
+- IP-hashning + rate-limit i samma DB (en `IpRate`-tabell hanterad av Prisma)
+- Rate-limit: max 5 leads/timme per IP-hash; honeypot-fält tystar bots
+- All validering sker både i klienten (Zod) och servern (samma Zod-schema importeras)
 
 ### Deploy-flöde
 
-- Frontend: GitHub push → Vercel auto-deploy → preview-URL per PR
-- API: GitHub Actions FTP-deploy (path-filter `api/**`) → Misshosting `/public_html/api/`
-- Domän: `speedison.se` A-record pekas till Vercel. MX-records kvar hos Misshosting för e-post.
+- **Repo:** En Railway-service kopplad till `l8-spiral/speedison` GitHub-repo
+- **Build:** Railway kör `npm install && npx prisma migrate deploy && npm run build` på push till `main`
+- **Run:** Railway kör `npm run start` på en Node-instance, healthcheck mot `/`
+- **DB-migrations:** Körs automatiskt vid deploy via `prisma migrate deploy` (ingen manuell SQL)
+- **Domän:** `speedison.se` A-record + `www` CNAME → Railway custom domain. SSL automatiskt.
+- **Mejl in (info@speedison.se MX):** Oförändrat — kvarstår där det är idag (Misshosting eller annan)
+- **Mejl ut (notifikationer):** Resend skickar från `noreply@speedison.se` (kräver SPF + DKIM-DNS-records hos domän-leverantören)
 
-GitHub Actions-workflow:
+### Miljövariabler (Railway-projekt)
 
-```yaml
-name: Deploy API to Misshosting
-on:
-  push:
-    branches: [main]
-    paths: ['api/**']
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./api/
-          server-dir: /public_html/api/
-```
-
-GitHub-secrets som krävs: `FTP_HOST`, `FTP_USER`, `FTP_PASSWORD`. Misshosting-server-side `.env` (utanför webbroten) håller `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `MAIL_TO`.
+| Variabel | Källa | Beskrivning |
+|---|---|---|
+| `DATABASE_URL` | Auto-injicerad av Railway MySQL-plugin | Privat connection-string mellan services |
+| `RESEND_API_KEY` | Manuell (Resend-dashboard) | API-nyckel för transaktionsmejl |
+| `MAIL_FROM` | Manuell | T.ex. `Speedison <noreply@speedison.se>` |
+| `MAIL_TO` | Manuell | `info@speedison.se` |
+| `IP_HASH_SALT` | Manuell, säker random | Salt för SHA-256-hashning av IP-adresser |
+| `NEXT_PUBLIC_APP_URL` | Manuell | `https://speedison.se` (för OG/canonical) |
 
 ### Designprinciper
 
-- Statisk där möjligt (Next.js bygger HTML statiskt). Endast `/api/`-anrop går till Misshosting.
+- En enda Node-process serverar både statiska frontend-rutter och API-route-handlers — samma origin → noll CORS-komplexitet.
 - `prefers-reduced-motion` respekteras: frame-scrub byts mot statisk hero-bild, alla overlays visas omedelbart.
 - Mobile fallback: 720w frame-bundle, ingen parallax, ingen cursor-spotlight, ingen ljud-autoplay.
 - A11y baseline: alla CTA tab-nåbara, hot-spots har aria-labels och keyboard-aktivering.
+- Type-safety end-to-end: Prisma-genererade typer + Zod-schema + TypeScript hela vägen.
 
 ## 7. Komponentträd
 
@@ -213,40 +221,68 @@ HotSpotMarker (klick på "motor")
 ```
 Step 5 submit
   → POST /api/leads { vehicle, services, contact, gdprConsent, honeypot }
-  → [PHP] valideras, INSERT INTO leads, mail(info@speedison.se), return { ok, leadId, ref }
+  → [Next.js route handler] Zod-valideras → Prisma INSERT → Resend.emails.send(info@speedison.se) → return { ok, leadId, ref }
   → Tack-skärm med ärendenummer
 ```
 
-### MySQL-schema
+### Prisma-schema (`web/prisma/schema.prisma`)
 
-```sql
-CREATE TABLE leads (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  ref VARCHAR(20) UNIQUE,
-  make VARCHAR(50),
-  model VARCHAR(100),
-  engine VARCHAR(100),
-  year SMALLINT,
-  services JSON,
-  name VARCHAR(120),
-  phone VARCHAR(40),
-  email VARCHAR(120),
-  message TEXT,
-  ip_hash VARCHAR(64),
-  status ENUM('new','contacted','quoted','done','lost') DEFAULT 'new'
-);
+Prisma genererar typade klienter och hanterar migrations automatiskt vid Railway-deploy (`prisma migrate deploy` körs som build-steg). Mapping till MySQL nedan.
 
-CREATE TABLE contacts (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  name VARCHAR(120),
-  email VARCHAR(120),
-  phone VARCHAR(40),
-  message TEXT,
-  ip_hash VARCHAR(64)
-);
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id         Int        @id @default(autoincrement())
+  createdAt  DateTime   @default(now()) @map("created_at")
+  ref        String     @unique @db.VarChar(20)
+  make       String     @db.VarChar(50)
+  model      String     @db.VarChar(100)
+  engine     String?    @db.VarChar(200)
+  year       Int?       @db.SmallInt
+  services   Json
+  name       String     @db.VarChar(120)
+  phone      String     @db.VarChar(40)
+  email      String     @db.VarChar(120)
+  message    String?    @db.Text
+  ipHash     String     @db.VarChar(64) @map("ip_hash")
+  status     LeadStatus @default(NEW)
+
+  @@index([ipHash, createdAt])
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  DONE
+  LOST
+
+  @@map("status")
+}
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  name      String   @db.VarChar(120)
+  email     String   @db.VarChar(120)
+  phone     String?  @db.VarChar(40)
+  message   String   @db.Text
+  ipHash    String   @db.VarChar(64) @map("ip_hash")
+
+  @@map("contacts")
+}
 ```
+
+Migrations skapas med `npx prisma migrate dev --name <namn>` lokalt, commitas under `prisma/migrations/`, och appliceras automatiskt vid Railway-deploy.
 
 ## 9. Animationer och scroll-mekanik
 
@@ -385,12 +421,12 @@ IP-hash:      abc123...
 
 ### Säkerhet
 
-- CORS: alla `/api/`-endpoints kräver `Origin: https://speedison.se`
-- Prepared statements (PDO) i PHP
-- htmlspecialchars på allt som ekas tillbaka
+- Same-origin: route handlers serveras från samma domän som klienten → noll CORS-yta. Origin-check i route handler avvisar fetches från andra origins.
+- Prisma + parameteriserade frågor → ingen SQL-injection
+- All input sanitiseras via Zod-schema; output går via React (auto-escapad)
 - Honeypot-fält: ifyllt → tystas bort som spam
-- Rate-limit: max 5 leads/timme per IP-hash
-- HTTPS överallt (Vercel + Misshosting redan SSL)
+- Rate-limit: max 5 leads/timme per IP-hash (lagras i samma DB)
+- HTTPS automatisk via Railways custom-domain-SSL
 
 ## 11. Felhantering
 
@@ -403,7 +439,8 @@ IP-hash:      abc123...
 | API network error | "Det går inte att nå servern. Vänligen ring 08-33 33 46" + behåller fält ifyllda |
 | API 4xx | Fältspecifika fel under varje fält |
 | API 5xx | Samma fallback som network error + `?fallback=true`-flagga |
-| Misshosting nere | Frontend funkar fortfarande (statiskt). Konfigurator-submit visar fallback-meddelande. |
+| Railway-instans nere | Hela sajten är då nere. Mitigeras av Railways healthcheck + automatisk restart; fallback-CTA i e-post-template "ring oss". |
+| Resend nere eller throttlad | Lead INSERT lyckas ändå. E-post markeras `mail_sent=false` (framtida fält) eller loggas; admin notifieras manuellt. |
 
 Lead-data sparas i `sessionStorage` så sidladdning inte tappar inmatning.
 
@@ -414,7 +451,7 @@ Lead-data sparas i `sessionStorage` så sidladdning inte tappar inmatning.
 | Unit | Vitest | pricing, validators, frame-index-mappning |
 | Integration | Vitest + Testing Library | configurator state-övergångar, hot-spot → store |
 | E2E happy path | Playwright | scrolla hero, klicka hot-spot, genomför 5 steg, submit |
-| PHP API | PHPUnit | validering, INSERT, rate-limit, e-post-mock |
+| API route handlers | Vitest med mockad Prisma + Resend | validering, rate-limit, mail-sändning, error paths |
 | Performance | Lighthouse CI i GitHub Actions | LCP, CLS, TBT, score ≥ 90 |
 | Tillgänglighet | axe-core via Playwright | WCAG 2.1 AA på huvudsidan + konfigurator |
 | Visuell regression | Hoppas i v1 | Lägga till Chromatic/Percy senare om behov uppstår |
@@ -432,9 +469,8 @@ Lead-data sparas i `sessionStorage` så sidladdning inte tappar inmatning.
 ```
 v1  ─── Setup & infra (1 v) ──────────────
         ├─ Repo init (l8-spiral/speedison) + Next.js scaffold
-        ├─ Misshosting FTP-creds + GitHub Actions
         ├─ DNS-plan klar (inte aktiverad)
-        ├─ Vercel-projekt kopplat till GitHub
+        ├─ Railway-projekt + MySQL-plugin + env vars
         └─ Tailwind + 21st.dev MCP + Lenis + GSAP installerat
 
 v2  ─── Hero-scrub + storytelling (1 v) ──
@@ -452,10 +488,11 @@ v3  ─── Sidor & komponenter (1 v) ────────
         └─ Reduced-motion + mobile fallbacks
 
 v4  ─── Backend, polish & launch (1 v) ───
-        ├─ PHP API (leads, contact) + MySQL-schema
-        ├─ E-post-template + rate-limit + honeypot
+        ├─ Prisma schema + migrations + DB-anslutning till Railway-MySQL
+        ├─ Next.js API routes (/api/leads, /api/contact) + Resend
+        ├─ Rate-limit + honeypot + Zod på server
         ├─ Lighthouse CI + axe-core fixar
-        ├─ Stage på preview-URL → kund granskar
+        ├─ Stage på Railway-preview → kund granskar
         ├─ DNS-flytt: speedison.se → Vercel A-record
         └─ MX kvar hos Misshosting
 ```
@@ -463,12 +500,13 @@ v4  ─── Backend, polish & launch (1 v) ───
 ## 15. Migration från befintlig sajt
 
 1. Backup av nuvarande WordPress (full DB + filer) tas innan något händer
-2. Bygg nya sajten på `staging.speedison.se` (subdomän → Vercel preview)
+2. Bygg nya sajten på Railway-genererad preview-URL (t.ex. `speedison-production.up.railway.app`) eller staging-subdomän
 3. Kund granskar staging i 3–5 dagar
-4. Switchdag: A-record `speedison.se` → Vercel-IP. TTL sänks 24 h innan
-5. SSL aktiveras automatiskt av Vercel (Let's Encrypt)
-6. Gamla WordPress-installationen lämnas orörd 30 dagar (rollback-möjlighet)
+4. Switchdag: peka `speedison.se` (A) + `www` (CNAME) på Railways custom-domain-target. TTL sänks 24 h innan
+5. SSL aktiveras automatiskt av Railway
+6. Gamla WordPress-installationen lämnas orörd hos Misshosting i 30 dagar (rollback-möjlighet)
 7. 301-redirects från gamla URLer (`/tjanster`, `/kontakt`) till nya ankarpunkter
+8. **MX-records (inkommande mejl) ändras inte** — info@speedison.se fortsätter levereras dit det går idag (Misshosting eller annan)
 
 ## 16. SEO och metadata
 
@@ -481,8 +519,8 @@ v4  ─── Backend, polish & launch (1 v) ───
 ## 17. GDPR och mätning
 
 - Ingen tracking-cookie utan samtycke
-- Vercel Analytics (privacy-by-default, ingen cookie, ingen IP-lagring)
-- Custom events spåras: `hero_completed`, `hotspot_clicked:{service}`, `configurator_step_completed:{step}`, `lead_submitted`, `lead_failed`
+- **Mätning v1:** Inga externa analytics. Vi loggar bara serverside-events (lead-submission, contact-submission) i DB-tabellerna. Detta räcker för att svara på "hur många leads kommer in i veckan".
+- **Mätning v2 (framtid):** Lägg till privacy-first analytics som Plausible (~$9/mån cloud) eller Umami (self-hostat på samma Railway-projekt, gratis-resurs-overhead) när det blir aktuellt.
 - IP-hashning i lead-tabellen — legitimt intresse (rate-limit, spam-skydd)
 - Cookie-banner endast om vi senare lägger på Google Analytics eller Meta Pixel
 - Privacy policy-sida: kort och rak (data sparas 24 mån, raderas på begäran)
@@ -492,8 +530,10 @@ v4  ─── Backend, polish & launch (1 v) ───
 | Risk | Mitigation |
 |---|---|
 | Frame-sequence laddar långsamt på 3G | Aggressiv lazy + 720w mobile bundle + statisk fallback |
-| Misshosting FTP-deploy misslyckas | GitHub Actions failar build → mejl. Manuell FTP via FileZilla som backup |
-| Lead-mejl fastnar i spam | SPF/DKIM-records sätts hos Misshosting för info@speedison.se |
+| Railway-deploy misslyckas | Auto-rollback till föregående deploy. Healthcheck-fail blockar release. |
+| Lead-mejl fastnar i spam | Resend-domänverifiering: SPF + DKIM + DMARC sätts upp hos domän-leverantör innan första mejl skickas |
+| Resend free tier (3k/mån) tar slut | Vid hög volym uppgradera till Resend Pro ($20/mån för 50k mejl). Lead-INSERT i DB blir aldrig blockerad. |
+| Hobby-budget slut p.g.a. resursanvändning | Railway varnar inom plan-konsolen. Plan B: skala ner befintligt projekt eller uppgradera till Pro ($20/mån, $20 inkluderat). |
 | Konfigurator för komplex för mobilanvändare | Steg-för-steg är lättare än långt formulär. Progressbar visar att slutet finns. |
 | Användaren hatar nya designen | Stage-period med kund-feedback INNAN switchdag |
 

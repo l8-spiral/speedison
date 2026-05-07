@@ -2,9 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a cinematic, scroll-driven Next.js site for speedison.se with a 15-second hero-scrub video story, an exploded-view hot-spot system, a 5-step lead-generating configurator, and a PHP/MySQL backend hosted on Misshosting.
+**Goal:** Build a cinematic, scroll-driven Next.js site for speedison.se with a 15-second hero-scrub video story, an exploded-view hot-spot system, a 5-step lead-generating configurator, and a Prisma + MySQL backend — all deployed as a single Railway service.
 
-**Architecture:** Next.js 15 App Router on Vercel for the frontend. PHP 8 + MySQL on Misshosting for the lead-capture API. GitHub Actions FTP-deploy for `api/`. WebP frame-sequence + GSAP ScrollTrigger drive the hero animation; canvas overlays add cursor-spotlight and parallax. State managed by Zustand; validation by Zod.
+**Architecture:** Next.js 15 App Router on Railway. Prisma ORM against a Railway-hosted MySQL plugin. Resend for transactional email. Same-origin Next.js route handlers for `/api/leads` and `/api/contact` (no separate backend deploy). WebP frame-sequence + GSAP ScrollTrigger drive the hero animation; canvas overlays add cursor-spotlight and parallax. State managed by Zustand; validation by Zod (shared client+server).
+
+> **Architecture revision 2026-05-08:** Original plan was Vercel + Misshosting/PHP. Pivoted to single-platform Railway deploy. PHP/FTP/Misshosting backend dropped. Affected tasks: T9, T11, T31 (api client URL), T33–T35, T43, T44, T46. Spec also revised at top of `docs/superpowers/specs/2026-05-07-speedison-redesign-design.md`.
+>
+> **Stack version note 2026-05-08:** `create-next-app` pinned the project to **Next.js 16.2.6 + React 19.2.4 + Tailwind v4**. This plan was authored assuming Next.js 15 conventions. **Implementer subagents working in `web/` MUST consult `web/node_modules/next/dist/docs/` for any feature that may have changed (App Router routing, route handlers, `Metadata`/`Viewport` APIs, `next/image`, `next/font`, `next/headers`, error/loading/not-found special files, etc.) before writing code.** The `web/AGENTS.md` file already enforces this for in-tree agents. If a code sample in this plan conflicts with the installed Next.js docs, follow the installed docs and report the discrepancy back as DONE_WITH_CONCERNS.
 
 **Tech Stack:** Next.js 15, TypeScript, Tailwind v4, GSAP + ScrollTrigger, Lenis, Framer Motion, Howler.js, Canvas 2D, Zustand, Zod, Vitest, Playwright, axe-core, PHP 8 (PDO), MySQL.
 
@@ -16,7 +20,7 @@
 
 ```
 speedison/
-├── web/                                 Next.js app (Vercel)
+├── web/                                 Next.js app (Railway target)
 │   ├── package.json
 │   ├── next.config.ts
 │   ├── tailwind.config.ts
@@ -34,7 +38,10 @@ speedison/
 │   │   │   ├── icon.png                favicon (Next.js auto)
 │   │   │   ├── opengraph-image.tsx     OG image generator
 │   │   │   ├── sitemap.ts
-│   │   │   └── robots.ts
+│   │   │   ├── robots.ts
+│   │   │   └── api/
+│   │   │       ├── leads/route.ts      POST /api/leads (Next.js handler)
+│   │   │       └── contact/route.ts    POST /api/contact
 │   │   ├── components/
 │   │   │   ├── hero-scrub/
 │   │   │   │   ├── HeroScrub.tsx
@@ -68,13 +75,19 @@ speedison/
 │   │   ├── lib/
 │   │   │   ├── pricing.ts              services + prices + types
 │   │   │   ├── content.ts              copy
-│   │   │   ├── api.ts                  fetch wrapper for PHP API
+│   │   │   ├── api.ts                  client fetch wrapper
 │   │   │   ├── audio.ts                Howler instances
-│   │   │   ├── analytics.ts            Vercel Analytics events
 │   │   │   ├── frames.ts               frame-index math
-│   │   │   └── schemas.ts              Zod schemas (shared)
+│   │   │   ├── schemas.ts              Zod schemas (shared client + server)
+│   │   │   ├── prisma.ts               PrismaClient singleton
+│   │   │   ├── mailer.ts               Resend wrapper
+│   │   │   ├── ratelimit.ts            IP-hash + DB-backed counter
+│   │   │   └── server-origin.ts        origin allowlist for route handlers
 │   │   └── styles/
 │   │       └── globals.css             Tailwind directives + theme tokens
+│   ├── prisma/
+│   │   ├── schema.prisma               Lead + Contact models
+│   │   └── migrations/                 generated migration history
 │   └── public/
 │       ├── frames/                     1920w/, 1280w/, 720w/ WebP sequences
 │       ├── gallery/                    customer photos
@@ -87,25 +100,13 @@ speedison/
 │       │   ├── engine-rev.mp3
 │       │   └── click-thunk.mp3
 │       └── chapter-bg/                 atmos video clips for chapters
-├── api/                                 PHP (Misshosting)
-│   ├── leads.php
-│   ├── contact.php
-│   ├── _shared/
-│   │   ├── db.php
-│   │   ├── cors.php
-│   │   ├── ratelimit.php
-│   │   └── mailer.php
-│   ├── _migrations/
-│   │   └── 001-initial.sql
-│   └── .htaccess                       deny direct access to _shared/
 ├── .github/
 │   └── workflows/
-│       ├── deploy-api.yml              FTP push api/ to Misshosting
-│       └── ci.yml                      lint, test, lighthouse
+│       └── ci.yml                      lint, test, lighthouse (deploy = Railway)
+├── railway.json                        Railway build/deploy config (root)
 ├── scripts/
 │   ├── extract-frames.sh               ffmpeg → WebP sequence
-│   ├── fetch-legacy-assets.sh          curl old site assets
-│   └── deploy-api-manual.sh            fallback FTP via lftp
+│   └── fetch-legacy-assets.sh          curl old site assets
 ├── docs/superpowers/specs/
 └── docs/superpowers/plans/
 ```
@@ -116,7 +117,7 @@ speedison/
 
 | # | Name | Tasks | Outcome |
 |---|---|---|---|
-| 1 | Setup & infra | 1–11 | Empty Next.js scaffold deploys to Vercel, GitHub Actions wired, tests run |
+| 1 | Setup & infra | 1–11 | Empty Next.js scaffold builds and runs locally; CI green; Railway config in repo (deploy itself deferred) |
 | 2 | Hero scrub | 12–22 | Scroll-driven hero with frames, overlays, hot-spots, effects, fallbacks |
 | 3 | Pages & configurator | 23–37 | All sections + chapters + 5-step configurator (no backend yet) |
 | 4 | Backend, launch | 38–49 | PHP API + MySQL, e-mail, polish, SEO, DNS-cutover ready |
@@ -212,12 +213,11 @@ indent_size = 4
 ```markdown
 # Speedison
 
-Cinematic redesign of speedison.se. Next.js 15 frontend on Vercel + PHP/MySQL API on Misshosting.
+Cinematic redesign of speedison.se. Single-platform deploy on Railway: Next.js 15 + Prisma + MySQL + Resend.
 
 ## Structure
 
-- `web/` — Next.js app (Vercel)
-- `api/` — PHP endpoints (Misshosting via FTP)
+- `web/` — Next.js app (Railway target; includes API route handlers and Prisma)
 - `scripts/` — build & deploy helpers
 - `docs/superpowers/` — specs and plans
 
@@ -833,48 +833,15 @@ git commit -m "feat(web): static copy in lib/content.ts"
 
 ---
 
-### Task 9: Set up GitHub Actions FTP-deploy workflow
+### Task 9: CI workflow + Railway deploy config
+
+> **Architecture revision (2026-05-08):** Hela stacken körs på Railway. Inga FTP-deploys behövs. CI-workflowen testar bara bygget; deploy görs av Railway när det är push till main (kopplas senare när vi går prod).
 
 **Files:**
-- Create: `.github/workflows/deploy-api.yml`
 - Create: `.github/workflows/ci.yml`
+- Create: `railway.json` (root) — buildkommando, healthcheck
 
-- [ ] **Step 1: Create `.github/workflows/deploy-api.yml`**
-
-```yaml
-name: Deploy API to Misshosting
-
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'api/**'
-      - '.github/workflows/deploy-api.yml'
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: FTP deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./api/
-          server-dir: /public_html/api/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/_migrations/**
-```
-
-- [ ] **Step 2: Create `.github/workflows/ci.yml`**
+- [ ] **Step 1: Create `.github/workflows/ci.yml`**
 
 ```yaml
 name: CI
@@ -898,30 +865,62 @@ jobs:
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      - run: npx prisma generate
       - run: npm test
       - run: npm run build
+        env:
+          # Build-time only; Prisma needs a placeholder to generate types
+          DATABASE_URL: mysql://placeholder:placeholder@localhost:3306/placeholder
 ```
 
-- [ ] **Step 3: Document secrets in `README.md`**
+- [ ] **Step 2: Create `railway.json` at the repo root**
 
-Add to README:
+```json
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd web && npm ci && npx prisma generate && npx prisma migrate deploy && npm run build"
+  },
+  "deploy": {
+    "startCommand": "cd web && npm run start",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  }
+}
+```
+
+Notes for the implementer:
+- We use Nixpacks (Railway's default) which auto-detects the Node version. If we want to pin it, add `engines.node = "20.x"` in `web/package.json` later.
+- `prisma migrate deploy` runs at build time so DB schema is up to date before the new container goes live. Safe — it never auto-resets data, only applies pending migrations.
+- The healthcheck hits `/` (the homepage). On a brand-new deploy where the homepage is empty, this still returns 200, which is fine.
+
+- [ ] **Step 3: Document required env vars in `README.md`**
+
+Add a section to `README.md`:
 
 ```markdown
-## Required GitHub Secrets
+## Required Railway environment variables
 
-For `deploy-api.yml`:
-- `FTP_HOST` — Misshosting FTP hostname
-- `FTP_USER` — Misshosting FTP username
-- `FTP_PASSWORD` — Misshosting FTP password
+Set in Railway project → Variables:
 
-Set at: Repo → Settings → Secrets and variables → Actions.
+| Variable | Source | Notes |
+|---|---|---|
+| `DATABASE_URL` | Auto from MySQL plugin | Click "Reference" → MySQL → `MYSQL_URL` |
+| `RESEND_API_KEY` | Resend dashboard | API key with send permission |
+| `MAIL_FROM` | Manual | e.g. `Speedison <noreply@speedison.se>` |
+| `MAIL_TO` | Manual | `info@speedison.se` |
+| `IP_HASH_SALT` | Manual (random) | Generate with `openssl rand -hex 32` |
+| `NEXT_PUBLIC_APP_URL` | Manual | `https://speedison.se` (production) |
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add .github/ README.md
-git commit -m "ci: add deploy-api workflow + node CI"
+git add .github/ railway.json README.md
+git commit -m "ci: GitHub Actions test workflow + Railway build/deploy config"
 ```
 
 ---
@@ -999,29 +998,14 @@ git commit -m "feat: fetch legacy logo, favicon, and gallery photos"
 
 ---
 
-### Task 11: Connect to Vercel and verify first deploy
+### Task 11: Next.js security headers + image config (Railway prep)
+
+> **Architecture revision (2026-05-08):** Vercel ersatt med Railway. Railway-projektet skapas av användaren när vi är redo att gå live (deferred to prod phase). Det här tasket bara konfigurerar Next.js för Railway-runtime; inget externt anrop görs.
 
 **Files:**
 - Modify: `web/next.config.ts`
 
-- [ ] **Step 1: Push current state to remote**
-
-```bash
-git push -u origin main
-```
-
-- [ ] **Step 2: Create a Vercel project**
-
-In a browser:
-1. Go to https://vercel.com/new
-2. Import `l8-spiral/speedison`
-3. Set **Root Directory** to `web`
-4. Framework: Next.js (auto-detect)
-5. Click Deploy
-
-Expected: deploy succeeds; preview URL shows the placeholder hero.
-
-- [ ] **Step 3: Update `web/next.config.ts` with image domains and headers**
+- [ ] **Step 1: Update `web/next.config.ts` with image config and security headers**
 
 ```ts
 import type { NextConfig } from "next";
@@ -1029,7 +1013,10 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
+    // Public CDN domains we serve images from. /public assets don't need entries here.
   },
+  // Output mode: standalone makes the Railway container small and self-contained.
+  output: "standalone",
   async headers() {
     return [{
       source: "/:path*",
@@ -1044,15 +1031,26 @@ const config: NextConfig = {
 export default config;
 ```
 
-- [ ] **Step 4: Commit and push (Vercel auto-redeploys)**
+Notes:
+- `output: "standalone"` puts only what's needed for runtime in `.next/standalone/`. Smaller container = faster Railway cold-start. Combined with `npm run start`, this is the recommended config for Node-runtime hosts like Railway.
+
+- [ ] **Step 2: Commit**
 
 ```bash
 git add web/next.config.ts
-git commit -m "chore(web): security headers + AVIF/WebP image formats"
-git push
+git commit -m "chore(web): security headers + standalone output for Railway"
 ```
 
-Verify the deployment URL still works.
+- [ ] **Step 3: Smoke-test the build locally**
+
+```bash
+cd web
+npm run build
+```
+
+Expected: build succeeds. `.next/standalone/server.js` exists.
+
+> **Deferred to prod phase (NOT now):** Creating the Railway project, adding the MySQL plugin, setting env vars, attaching the GitHub repo, and triggering the first deploy. The user will do this when we're ready to go live; the plan covers it in the prod-launch tasks.
 
 ---
 
@@ -3337,13 +3335,13 @@ git commit -m "feat(web): 5-step configurator with progress bar + hot-spot wirin
 // web/src/lib/api.ts
 import type { Lead } from "./schemas";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://speedison.se/api";
-
+// Same-origin: route handler lives at /api/leads in this Next.js app.
+// No CORS, no NEXT_PUBLIC_API_BASE needed.
 export type LeadOk = { ok: true; leadId: number; ref: string };
 export type LeadErr = { ok: false; error: string; fields?: Record<string,string> };
 
 export async function submitLead(payload: Lead, signal?: AbortSignal): Promise<LeadOk | LeadErr> {
-  const res = await fetch(`${API_BASE}/leads.php`, {
+  const res = await fetch(`/api/leads`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -3426,7 +3424,7 @@ export default function IntegritetPage() {
         <h2>Säkerhet</h2>
         <p>Vi lagrar IP-adresser i hashad form (SHA-256) för spam- och skräppostskydd. Webbplatsen serveras alltid över HTTPS.</p>
         <h2>Cookies</h2>
-        <p>Vi använder Vercel Analytics som inte sätter cookies och inte sparar IP-adresser i klartext. Vi sätter inte några spårnings-cookies utan ditt aktiva samtycke.</p>
+        <p>Vi använder inte några spårnings-cookies. Webbplatsen sätter inga cookies utan ditt aktiva samtycke.</p>
         <h2>Kontakta oss</h2>
         <p>Frågor? <a href={`mailto:${COMPANY.email}`} className="text-copper-300">{COMPANY.email}</a> · {COMPANY.phone}</p>
       </article>
@@ -3455,417 +3453,686 @@ git commit -m "feat(web): privacy policy page + tailwind typography plugin"
 
 ## Milestone 4 — Backend, polish, launch
 
-### Task 33: PHP API — DB connection and helpers
+### Task 33: Prisma + DB infrastructure
+
+> **Architecture revision (2026-05-08):** Prisma + MySQL ersätter PHP/PDO. Schema bor i `web/prisma/schema.prisma`. Migrations versioneras i `web/prisma/migrations/`. Vid Railway-deploy körs `prisma migrate deploy` automatiskt (se T9).
 
 **Files:**
-- Create: `api/_shared/db.php`
-- Create: `api/_shared/cors.php`
-- Create: `api/_shared/ratelimit.php`
-- Create: `api/_shared/mailer.php`
-- Create: `api/.htaccess`
-- Create: `api/_migrations/001-initial.sql`
+- Create: `web/prisma/schema.prisma`
+- Create: `web/prisma/migrations/<auto>/migration.sql` (genererad)
+- Create: `web/src/lib/prisma.ts`
+- Create: `web/src/lib/mailer.ts`
+- Create: `web/src/lib/ratelimit.ts`
+- Create: `web/src/lib/server-origin.ts`
+- Create: `web/.env.example`
+- Create: `web/test/lib/ratelimit.test.ts`
+- Modify: `web/package.json` (Prisma + Resend)
 
-- [ ] **Step 1: Migration SQL**
-
-```sql
--- api/_migrations/001-initial.sql
-CREATE TABLE IF NOT EXISTS leads (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  ref VARCHAR(20) UNIQUE,
-  make VARCHAR(50),
-  model VARCHAR(100),
-  engine VARCHAR(200),
-  year SMALLINT,
-  services JSON,
-  name VARCHAR(120),
-  phone VARCHAR(40),
-  email VARCHAR(120),
-  message TEXT,
-  ip_hash VARCHAR(64),
-  status ENUM('new','contacted','quoted','done','lost') DEFAULT 'new'
-);
-
-CREATE TABLE IF NOT EXISTS contacts (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  name VARCHAR(120),
-  email VARCHAR(120),
-  phone VARCHAR(40),
-  message TEXT,
-  ip_hash VARCHAR(64)
-);
-
-CREATE INDEX idx_leads_iphash_created ON leads (ip_hash, created_at);
-```
-
-(Run manually on Misshosting via phpMyAdmin or `mysql` CLI before first deploy.)
-
-- [ ] **Step 2: `api/.htaccess`**
-
-```
-Options -Indexes
-
-# Block direct access to shared/migrations
-<FilesMatch "\.(sql|md|env)$">
-  Require all denied
-</FilesMatch>
-
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteRule ^_shared/ - [F,L]
-  RewriteRule ^_migrations/ - [F,L]
-</IfModule>
-
-# JSON content-type fallback
-AddType application/json .json
-```
-
-- [ ] **Step 3: `api/_shared/db.php`**
-
-```php
-<?php
-declare(strict_types=1);
-
-function db(): PDO {
-  static $pdo = null;
-  if ($pdo) return $pdo;
-
-  $host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
-  $name = $_ENV['DB_NAME'] ?? getenv('DB_NAME');
-  $user = $_ENV['DB_USER'] ?? getenv('DB_USER');
-  $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS');
-  if (!$name || !$user) throw new RuntimeException("DB env not configured");
-
-  $pdo = new PDO(
-    "mysql:host=$host;dbname=$name;charset=utf8mb4",
-    $user, $pass,
-    [
-      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-      PDO::ATTR_EMULATE_PREPARES => false,
-    ]
-  );
-  return $pdo;
-}
-
-function load_env(): void {
-  $envFile = dirname(__DIR__, 2) . '/.env';
-  if (!file_exists($envFile)) return;
-  foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-    if (str_starts_with(trim($line), '#')) continue;
-    [$k, $v] = array_map('trim', explode('=', $line, 2));
-    $v = trim($v, "\"'");
-    $_ENV[$k] = $v;
-    putenv("$k=$v");
-  }
-}
-```
-
-- [ ] **Step 4: `api/_shared/cors.php`**
-
-```php
-<?php
-declare(strict_types=1);
-
-function cors_or_die(): void {
-  $allowed = ['https://speedison.se', 'https://www.speedison.se'];
-  $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-  if (in_array($origin, $allowed, true)) {
-    header("Access-Control-Allow-Origin: $origin");
-    header("Vary: Origin");
-    header("Access-Control-Allow-Methods: POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type");
-    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') { http_response_code(204); exit; }
-    return;
-  }
-  http_response_code(403);
-  echo json_encode(['ok'=>false, 'error'=>'FORBIDDEN_ORIGIN']);
-  exit;
-}
-```
-
-- [ ] **Step 5: `api/_shared/ratelimit.php`**
-
-```php
-<?php
-declare(strict_types=1);
-
-function ip_hash(): string {
-  $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-  $ip = explode(',', $ip)[0];
-  $salt = $_ENV['IP_HASH_SALT'] ?? getenv('IP_HASH_SALT') ?: 'speedison-default-salt-change-me';
-  return hash('sha256', $salt . trim($ip));
-}
-
-function rate_limit_or_die(string $ipHash, int $maxPerHour = 5): void {
-  $stmt = db()->prepare(
-    "SELECT COUNT(*) AS c FROM leads WHERE ip_hash = :h AND created_at > (NOW() - INTERVAL 1 HOUR)"
-  );
-  $stmt->execute([':h' => $ipHash]);
-  $row = $stmt->fetch();
-  if (($row['c'] ?? 0) >= $maxPerHour) {
-    http_response_code(429);
-    echo json_encode(['ok'=>false, 'error'=>'RATE_LIMITED']);
-    exit;
-  }
-}
-```
-
-- [ ] **Step 6: `api/_shared/mailer.php`**
-
-```php
-<?php
-declare(strict_types=1);
-
-function send_lead_email(array $lead, string $ref): bool {
-  $to = $_ENV['MAIL_TO'] ?? getenv('MAIL_TO') ?: 'info@speedison.se';
-  $from = $_ENV['MAIL_FROM'] ?? getenv('MAIL_FROM') ?: 'no-reply@speedison.se';
-
-  $subject = "[$ref] Ny offertförfrågan – {$lead['vehicle']['make']} {$lead['vehicle']['model']}";
-  $services = implode(', ', $lead['services']);
-
-  $body  = "Märke:        {$lead['vehicle']['make']}\n";
-  $body .= "Modell:       {$lead['vehicle']['model']}\n";
-  $body .= "Motor:        {$lead['vehicle']['engine']}";
-  if (!empty($lead['vehicle']['year'])) $body .= " ({$lead['vehicle']['year']})";
-  $body .= "\nTjänster:     $services\n\n";
-  $body .= "Kontakt:      {$lead['contact']['name']}\n";
-  $body .= "Telefon:      {$lead['contact']['phone']}\n";
-  $body .= "E-post:       {$lead['contact']['email']}\n\n";
-  $body .= "Meddelande:\n> " . str_replace("\n", "\n> ", $lead['contact']['message'] ?? '') . "\n\n";
-  $body .= "Mottaget:     " . date('Y-m-d H:i') . "\n";
-
-  $headers = [
-    "From: $from",
-    "Reply-To: {$lead['contact']['email']}",
-    "Content-Type: text/plain; charset=UTF-8",
-  ];
-  return mail($to, $subject, $body, implode("\r\n", $headers));
-}
-```
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 1: Install Prisma, Prisma client, and Resend**
 
 ```bash
-git add api/
-git commit -m "feat(api): db + cors + ratelimit + mailer helpers + migration"
+cd web
+npm install -D prisma
+npm install @prisma/client resend
+```
+
+- [ ] **Step 2: Init Prisma scaffolding**
+
+```bash
+npx prisma init --datasource-provider mysql
+```
+
+This creates `prisma/schema.prisma` and `.env`. Replace BOTH with the versions in the next steps.
+
+- [ ] **Step 3: Replace `web/prisma/schema.prisma` with the spec schema**
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id         Int        @id @default(autoincrement())
+  createdAt  DateTime   @default(now()) @map("created_at")
+  ref        String     @unique @db.VarChar(20)
+  make       String     @db.VarChar(50)
+  model      String     @db.VarChar(100)
+  engine     String?    @db.VarChar(200)
+  year       Int?       @db.SmallInt
+  services   Json
+  name       String     @db.VarChar(120)
+  phone      String     @db.VarChar(40)
+  email      String     @db.VarChar(120)
+  message    String?    @db.Text
+  ipHash     String     @db.VarChar(64) @map("ip_hash")
+  status     LeadStatus @default(NEW)
+
+  @@index([ipHash, createdAt])
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  DONE
+  LOST
+}
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  name      String   @db.VarChar(120)
+  email     String   @db.VarChar(120)
+  phone     String?  @db.VarChar(40)
+  message   String   @db.Text
+  ipHash    String   @db.VarChar(64) @map("ip_hash")
+
+  @@map("contacts")
+}
+```
+
+- [ ] **Step 4: Create `web/.env.example`** (committed) and update `web/.env` (gitignored, your local dev secrets)
+
+`web/.env.example`:
+```
+# Local development. Copy to web/.env and fill in.
+DATABASE_URL="mysql://root:password@localhost:3306/speedison_dev"
+RESEND_API_KEY=
+MAIL_FROM="Speedison <noreply@speedison.se>"
+MAIL_TO="info@speedison.se"
+IP_HASH_SALT="dev-only-salt-do-not-use-in-prod"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+`web/.env` (your local copy, gitignored — fill with your actual local DB):
+```
+DATABASE_URL="mysql://root:yourpw@localhost:3306/speedison_dev"
+RESEND_API_KEY=re_xxx_test_key
+MAIL_FROM="Speedison <noreply@speedison.se>"
+MAIL_TO="info@speedison.se"
+IP_HASH_SALT="local-dev-salt-12345"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+If you don't have local MySQL: install Docker and run `docker run -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=speedison_dev -d mysql:8`. Or skip migration locally — Prisma `generate` works without a live DB; `migrate dev` requires one.
+
+- [ ] **Step 5: Create the initial migration**
+
+```bash
+cd web
+npx prisma migrate dev --name init
+```
+
+Expected: creates `prisma/migrations/<timestamp>_init/migration.sql` and applies it to the local DB. Prisma client is auto-generated.
+
+If no local DB available: skip the apply step but still create migration files manually with `npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql`. The implementer can decide; on Windows `date` formatting may differ.
+
+- [ ] **Step 6: Create `web/src/lib/prisma.ts`** — singleton client (avoid hot-reload-storm in dev)
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+```
+
+- [ ] **Step 7: Create `web/src/lib/mailer.ts`** — Resend wrapper
+
+```ts
+import { Resend } from "resend";
+
+let _resend: Resend | null = null;
+function client(): Resend {
+  if (_resend) return _resend;
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY is not set");
+  _resend = new Resend(key);
+  return _resend;
+}
+
+export type LeadEmailInput = {
+  ref: string;
+  vehicle: { make: string; model: string; engine?: string; year?: number | null };
+  services: string[];
+  contact: { name: string; phone: string; email: string; message?: string };
+};
+
+export async function sendLeadEmail(lead: LeadEmailInput): Promise<{ id: string } | { error: string }> {
+  const to = process.env.MAIL_TO ?? "info@speedison.se";
+  const from = process.env.MAIL_FROM ?? "Speedison <noreply@speedison.se>";
+
+  const services = lead.services.join(", ");
+  const yearStr = lead.vehicle.year ? ` (${lead.vehicle.year})` : "";
+
+  const text =
+`Märke:        ${lead.vehicle.make}
+Modell:       ${lead.vehicle.model}
+Motor:        ${lead.vehicle.engine ?? ""}${yearStr}
+Tjänster:     ${services}
+
+Kontakt:      ${lead.contact.name}
+Telefon:      ${lead.contact.phone}
+E-post:       ${lead.contact.email}
+
+Meddelande:
+> ${(lead.contact.message ?? "").split("\n").join("\n> ")}
+
+Mottaget:     ${new Date().toISOString().replace("T", " ").slice(0, 16)}
+Ärendenr:     ${lead.ref}
+`;
+
+  try {
+    const result = await client().emails.send({
+      from,
+      to: [to],
+      replyTo: lead.contact.email,
+      subject: `[${lead.ref}] Ny offertförfrågan – ${lead.vehicle.make} ${lead.vehicle.model}`,
+      text,
+    });
+    if (result.error) return { error: result.error.message ?? "send_failed" };
+    return { id: result.data?.id ?? "unknown" };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "send_threw" };
+  }
+}
+
+export async function sendContactEmail(c: { name: string; email: string; phone?: string; message: string }) {
+  const to = process.env.MAIL_TO ?? "info@speedison.se";
+  const from = process.env.MAIL_FROM ?? "Speedison <noreply@speedison.se>";
+  const text = `Från: ${c.name} <${c.email}>${c.phone ? ` · ${c.phone}` : ""}\n\n${c.message}`;
+  try {
+    await client().emails.send({
+      from, to: [to], replyTo: c.email,
+      subject: "Nytt kontaktmeddelande",
+      text,
+    });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+```
+
+- [ ] **Step 8: Create `web/src/lib/ratelimit.ts`** with a unit test (TDD)
+
+Write the failing test first — `web/test/lib/ratelimit.test.ts`:
+
+```ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { hashIp } from "@/lib/ratelimit";
+
+describe("hashIp", () => {
+  beforeEach(() => {
+    vi.stubEnv("IP_HASH_SALT", "test-salt-1234");
+  });
+
+  it("produces a 64-char hex string", () => {
+    expect(hashIp("198.51.100.42")).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("is deterministic for the same input", () => {
+    expect(hashIp("198.51.100.42")).toBe(hashIp("198.51.100.42"));
+  });
+
+  it("differs with different salt", () => {
+    const a = hashIp("198.51.100.42");
+    vi.stubEnv("IP_HASH_SALT", "different-salt");
+    const b = hashIp("198.51.100.42");
+    expect(a).not.toBe(b);
+  });
+
+  it("trims whitespace and handles X-Forwarded-For chains", () => {
+    expect(hashIp(" 198.51.100.42 , 10.0.0.1 ")).toBe(hashIp("198.51.100.42"));
+  });
+});
+```
+
+Run test (expect FAIL):
+```bash
+npm test
+```
+
+Implement `web/src/lib/ratelimit.ts`:
+
+```ts
+import { createHash } from "node:crypto";
+import { prisma } from "./prisma";
+
+export function hashIp(ipOrXff: string): string {
+  const salt = process.env.IP_HASH_SALT ?? "DEV_FALLBACK_SALT";
+  // Pick the first IP from a possible X-Forwarded-For chain
+  const first = ipOrXff.split(",")[0]?.trim() ?? "unknown";
+  return createHash("sha256").update(salt + first).digest("hex");
+}
+
+export async function isRateLimited(
+  ipHash: string,
+  maxPerHour = 5
+): Promise<boolean> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const count = await prisma.lead.count({
+    where: { ipHash, createdAt: { gt: oneHourAgo } },
+  });
+  return count >= maxPerHour;
+}
+```
+
+Run tests (expect PASS):
+```bash
+npm test
+```
+
+- [ ] **Step 9: Create `web/src/lib/server-origin.ts`** — origin allowlist for route handlers
+
+```ts
+const ALLOWED_ORIGINS = new Set([
+  "https://speedison.se",
+  "https://www.speedison.se",
+  // Local development is allowed when NODE_ENV !== "production"
+]);
+
+export function isAllowedOrigin(origin: string | null): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.has(origin);
+}
+```
+
+- [ ] **Step 10: Update `web/.gitignore`** to skip Prisma and env
+
+Append to `web/.gitignore` (or create if missing — Next.js scaffold may already have one):
+
+```
+.env
+.env.local
+prisma/migrations/**/migration_lock.toml.bak
+```
+
+(`prisma/migrations/**/migration.sql` IS committed; only the working-state lock backups are not.)
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add web/prisma/ web/src/lib/prisma.ts web/src/lib/mailer.ts \
+        web/src/lib/ratelimit.ts web/src/lib/server-origin.ts \
+        web/test/lib/ratelimit.test.ts web/.env.example web/package.json \
+        web/package-lock.json web/.gitignore
+git commit -m "feat(web): Prisma schema + client singleton + Resend mailer + ratelimit (TDD)"
 ```
 
 ---
 
-### Task 34: PHP API — `leads.php` endpoint
+### Task 34: `/api/leads` Next.js route handler
+
+> **Architecture revision (2026-05-08):** Ersätter `api/leads.php`. Same-origin route handler i Next.js. Type-safe end-to-end tack vare delade Zod-schemat från T7.
 
 **Files:**
-- Create: `api/leads.php`
+- Create: `web/src/app/api/leads/route.ts`
+- Create: `web/test/api/leads.test.ts`
 
-- [ ] **Step 1: Create the endpoint**
+- [ ] **Step 1: Write a failing route-handler unit test**
 
-```php
-<?php
-declare(strict_types=1);
-require_once __DIR__ . '/_shared/db.php';
-require_once __DIR__ . '/_shared/cors.php';
-require_once __DIR__ . '/_shared/ratelimit.php';
-require_once __DIR__ . '/_shared/mailer.php';
+`web/test/api/leads.test.ts`:
 
-load_env();
-header('Content-Type: application/json');
-cors_or_die();
+```ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { POST } from "@/app/api/leads/route";
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-  http_response_code(405);
-  echo json_encode(['ok'=>false, 'error'=>'METHOD_NOT_ALLOWED']);
-  exit;
+// Mock prisma
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    lead: {
+      count: vi.fn().mockResolvedValue(0),
+      create: vi.fn().mockResolvedValue({ id: 42, ref: "SP-2026-ABCDEF" }),
+    },
+  },
+}));
+
+// Mock mailer
+vi.mock("@/lib/mailer", () => ({
+  sendLeadEmail: vi.fn().mockResolvedValue({ id: "email-1" }),
+}));
+
+const validBody = {
+  vehicle: { make: "Mercedes", model: "AMG A45", engine: "M139", year: 2022 },
+  services: ["stage2", "popsBangs"],
+  contact: { name: "Erik", phone: "+46701234567", email: "e@x.se", message: "" },
+  gdprConsent: true,
+  honeypot: "",
+};
+
+function makeRequest(body: unknown, opts: RequestInit = {}): Request {
+  return new Request("http://localhost/api/leads", {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: "https://speedison.se", ...(opts.headers as Record<string, string> ?? {}) },
+    body: JSON.stringify(body),
+    ...opts,
+  });
 }
 
-$raw = file_get_contents('php://input') ?: '';
-if (strlen($raw) > 8192) { http_response_code(413); echo json_encode(['ok'=>false]); exit; }
-$payload = json_decode($raw, true);
-if (!is_array($payload)) { http_response_code(400); echo json_encode(['ok'=>false, 'error'=>'BAD_JSON']); exit; }
+describe("POST /api/leads", () => {
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("IP_HASH_SALT", "test-salt");
+  });
 
-// Honeypot
-if (!isset($payload['honeypot']) || $payload['honeypot'] !== '') {
-  http_response_code(204); exit; // silent
-}
+  it("returns 200 with ref on a valid lead", async () => {
+    const res = await POST(makeRequest(validBody));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json.ref).toMatch(/^SP-\d{4}-[a-f0-9]{6}$/i);
+    expect(json.leadId).toBe(42);
+  });
 
-// GDPR
-if (empty($payload['gdprConsent'])) {
-  http_response_code(400);
-  echo json_encode(['ok'=>false, 'error'=>'VALIDATION_FAILED', 'fields'=>['gdprConsent'=>'GDPR krävs']]);
-  exit;
-}
+  it("rejects missing services with 400", async () => {
+    const res = await POST(makeRequest({ ...validBody, services: [] }));
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.ok).toBe(false);
+    expect(json.error).toBe("VALIDATION_FAILED");
+  });
 
-// Sanitize
-$VALID_SERVICES = ['stage1','stage2','popsBangs','egrOff','dpfOff','adblueOff','noxOff','exhaust'];
-$services = array_values(array_intersect($payload['services'] ?? [], $VALID_SERVICES));
-if (count($services) === 0) {
-  http_response_code(400);
-  echo json_encode(['ok'=>false, 'error'=>'VALIDATION_FAILED', 'fields'=>['services'=>'Välj minst en tjänst']]);
-  exit;
-}
+  it("silently 204s on filled honeypot", async () => {
+    const res = await POST(makeRequest({ ...validBody, honeypot: "spam" }));
+    expect(res.status).toBe(204);
+  });
 
-$vehicle = $payload['vehicle'] ?? [];
-$contact = $payload['contact'] ?? [];
+  it("rejects forbidden origin in production", async () => {
+    const res = await POST(makeRequest(validBody, { headers: { origin: "https://evil.example" } }));
+    expect(res.status).toBe(403);
+  });
 
-$errors = [];
-foreach (['make','model'] as $k) {
-  if (!isset($vehicle[$k]) || strlen(trim((string)$vehicle[$k])) < 1) $errors["vehicle.$k"] = "Krävs";
-}
-foreach (['name','phone','email'] as $k) {
-  if (!isset($contact[$k]) || strlen(trim((string)$contact[$k])) < 2) $errors["contact.$k"] = "Krävs";
-}
-if (isset($contact['email']) && !filter_var($contact['email'], FILTER_VALIDATE_EMAIL)) {
-  $errors['contact.email'] = "Ogiltig e-post";
-}
-if (!empty($errors)) {
-  http_response_code(400);
-  echo json_encode(['ok'=>false, 'error'=>'VALIDATION_FAILED', 'fields'=>$errors]);
-  exit;
-}
-
-// Rate limit
-$ipHash = ip_hash();
-rate_limit_or_die($ipHash, 5);
-
-// Insert
-$year = isset($vehicle['year']) ? (int)$vehicle['year'] : null;
-$ref = 'SP-' . date('Y') . '-' . substr(bin2hex(random_bytes(3)), 0, 6);
-
-$stmt = db()->prepare(
-  "INSERT INTO leads (ref, make, model, engine, year, services, name, phone, email, message, ip_hash)
-   VALUES (:ref, :make, :model, :engine, :year, :services, :name, :phone, :email, :message, :iphash)"
-);
-$stmt->execute([
-  ':ref' => $ref,
-  ':make' => trim((string)$vehicle['make']),
-  ':model' => trim((string)$vehicle['model']),
-  ':engine' => trim((string)($vehicle['engine'] ?? '')),
-  ':year' => $year,
-  ':services' => json_encode($services, JSON_UNESCAPED_UNICODE),
-  ':name' => trim((string)$contact['name']),
-  ':phone' => trim((string)$contact['phone']),
-  ':email' => trim((string)$contact['email']),
-  ':message' => trim((string)($contact['message'] ?? '')),
-  ':iphash' => $ipHash,
-]);
-$leadId = (int)db()->lastInsertId();
-
-// Email — best effort; failure does not fail the API
-@send_lead_email([
-  'vehicle' => $vehicle,
-  'services' => $services,
-  'contact' => $contact,
-], $ref);
-
-echo json_encode(['ok'=>true, 'leadId'=>$leadId, 'ref'=>$ref]);
+  it("rejects bad JSON", async () => {
+    const req = new Request("http://localhost/api/leads", {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: "https://speedison.se" },
+      body: "not json",
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+});
 ```
 
-- [ ] **Step 2: Commit**
+Run (expect FAIL):
+```bash
+cd web && npm test
+```
+
+- [ ] **Step 2: Implement the route handler**
+
+`web/src/app/api/leads/route.ts`:
+
+```ts
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { sendLeadEmail } from "@/lib/mailer";
+import { hashIp, isRateLimited } from "@/lib/ratelimit";
+import { isAllowedOrigin } from "@/lib/server-origin";
+import { LeadSchema } from "@/lib/schemas";
+import { Prisma } from "@prisma/client";
+
+export const runtime = "nodejs"; // we use Prisma + Resend (Node-only)
+
+const MAX_BODY_BYTES = 8192;
+
+function makeRef(): string {
+  const year = new Date().getFullYear();
+  const random = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `SP-${year}-${random.toUpperCase()}`;
+}
+
+function clientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for") ?? "unknown";
+}
+
+export async function POST(req: Request): Promise<Response> {
+  // Origin check
+  if (!isAllowedOrigin(req.headers.get("origin"))) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN_ORIGIN" }, { status: 403 });
+  }
+
+  // Body size guard
+  const cl = req.headers.get("content-length");
+  if (cl && Number(cl) > MAX_BODY_BYTES) {
+    return NextResponse.json({ ok: false, error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
+  }
+
+  // Parse JSON
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "BAD_JSON" }, { status: 400 });
+  }
+
+  // Honeypot — silent 204 to confuse bots
+  if (typeof raw === "object" && raw !== null && (raw as { honeypot?: unknown }).honeypot !== "") {
+    return new Response(null, { status: 204 });
+  }
+
+  // Zod validation (shared schema with the client)
+  const parsed = LeadSchema.safeParse(raw);
+  if (!parsed.success) {
+    const fields: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      fields[issue.path.join(".")] = issue.message;
+    }
+    return NextResponse.json(
+      { ok: false, error: "VALIDATION_FAILED", fields },
+      { status: 400 }
+    );
+  }
+  const lead = parsed.data;
+
+  // Rate limit
+  const ipHash = hashIp(clientIp(req));
+  if (await isRateLimited(ipHash, 5)) {
+    return NextResponse.json({ ok: false, error: "RATE_LIMITED" }, { status: 429 });
+  }
+
+  // Insert
+  const ref = makeRef();
+  let created;
+  try {
+    created = await prisma.lead.create({
+      data: {
+        ref,
+        make: lead.vehicle.make,
+        model: lead.vehicle.model,
+        engine: lead.vehicle.engine ?? null,
+        year: lead.vehicle.year ?? null,
+        services: lead.services as unknown as Prisma.InputJsonValue,
+        name: lead.contact.name,
+        phone: lead.contact.phone,
+        email: lead.contact.email,
+        message: lead.contact.message ?? null,
+        ipHash,
+      },
+    });
+  } catch (e) {
+    console.error("leads.insert", e);
+    return NextResponse.json({ ok: false, error: "DB_ERROR" }, { status: 500 });
+  }
+
+  // Best-effort email — never fail the request because of this
+  void sendLeadEmail({
+    ref: created.ref,
+    vehicle: lead.vehicle,
+    services: lead.services,
+    contact: lead.contact,
+  }).catch((e) => console.error("leads.mail", e));
+
+  return NextResponse.json({ ok: true, leadId: created.id, ref: created.ref });
+}
+```
+
+Run tests (expect PASS):
+```bash
+npm test
+```
+
+- [ ] **Step 3: Commit**
 
 ```bash
-git add api/leads.php
-git commit -m "feat(api): POST /leads endpoint with validation, rate-limit, email"
+git add web/src/app/api/leads/route.ts web/test/api/leads.test.ts
+git commit -m "feat(web): POST /api/leads route handler with Prisma + Resend + Zod (TDD)"
 ```
 
-- [ ] **Step 3: After GitHub secrets are set, push to trigger FTP deploy**
-
-```bash
-git push
-```
-
-Verify via GitHub Actions UI that `Deploy API to Misshosting` succeeds.
-
-- [ ] **Step 4: Manually run migration on Misshosting**
-
-Open Misshosting cPanel → phpMyAdmin → run contents of `api/_migrations/001-initial.sql`.
-
-- [ ] **Step 5: Smoke test**
-
-```bash
-curl -i -X POST https://speedison.se/api/leads.php \
-  -H "Content-Type: application/json" \
-  -H "Origin: https://speedison.se" \
-  -d '{
-    "vehicle":{"make":"Mercedes","model":"AMG A45","engine":"M139","year":2022},
-    "services":["stage2","popsBangs"],
-    "contact":{"name":"Test Tester","phone":"070 123 45 67","email":"test@example.com","message":"smoke"},
-    "gdprConsent":true,
-    "honeypot":""
-  }'
-```
-
-Expected: `HTTP/2 200`, body `{"ok":true,"leadId":1,"ref":"SP-2026-XXXXXX"}`. E-mail arrives at info@speedison.se.
+> **Deferred to prod phase:** Pushing to Railway, the live `curl` smoke-test against `https://speedison.se/api/leads`, and verifying the email lands in info@speedison.se. The route handler is fully unit-tested locally; production verification happens at launch.
 
 ---
 
-### Task 35: PHP API — `contact.php` endpoint
+### Task 35: `/api/contact` Next.js route handler
+
+> **Architecture revision (2026-05-08):** Mirror of `/api/leads` for the simpler contact form.
 
 **Files:**
-- Create: `api/contact.php`
+- Create: `web/src/app/api/contact/route.ts`
+- Create: `web/test/api/contact.test.ts`
 
-- [ ] **Step 1: Implement (mirror leads.php but simpler)**
+- [ ] **Step 1: Write failing test**
 
-```php
-<?php
-declare(strict_types=1);
-require_once __DIR__ . '/_shared/db.php';
-require_once __DIR__ . '/_shared/cors.php';
-require_once __DIR__ . '/_shared/ratelimit.php';
+`web/test/api/contact.test.ts`:
 
-load_env();
-header('Content-Type: application/json');
-cors_or_die();
+```ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { POST } from "@/app/api/contact/route";
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-  http_response_code(405); echo json_encode(['ok'=>false]); exit;
+vi.mock("@/lib/prisma", () => ({
+  prisma: { contact: { create: vi.fn().mockResolvedValue({ id: 7 }) } },
+}));
+vi.mock("@/lib/mailer", () => ({
+  sendContactEmail: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
+function req(body: unknown, headers: Record<string, string> = {}): Request {
+  return new Request("http://localhost/api/contact", {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: "https://speedison.se", ...headers },
+    body: JSON.stringify(body),
+  });
 }
 
-$raw = file_get_contents('php://input') ?: '';
-$p = json_decode($raw, true);
-if (!is_array($p)) { http_response_code(400); echo json_encode(['ok'=>false]); exit; }
-if (!isset($p['honeypot']) || $p['honeypot'] !== '') { http_response_code(204); exit; }
+describe("POST /api/contact", () => {
+  beforeEach(() => { vi.stubEnv("NODE_ENV", "production"); vi.stubEnv("IP_HASH_SALT","x"); });
 
-$errors = [];
-foreach (['name','email','message'] as $k) {
-  if (empty(trim((string)($p[$k] ?? '')))) $errors[$k] = 'Krävs';
-}
-if (isset($p['email']) && !filter_var($p['email'], FILTER_VALIDATE_EMAIL)) {
-  $errors['email'] = 'Ogiltig e-post';
-}
-if (!empty($errors)) {
-  http_response_code(400); echo json_encode(['ok'=>false, 'fields'=>$errors]); exit;
-}
+  it("returns 200 on a valid message", async () => {
+    const res = await POST(req({
+      name: "Erik", email: "e@x.se", message: "Hej!", honeypot: "",
+    }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).ok).toBe(true);
+  });
 
-$ipHash = ip_hash();
+  it("rejects missing message", async () => {
+    const res = await POST(req({ name: "Erik", email: "e@x.se", message: "", honeypot: "" }));
+    expect(res.status).toBe(400);
+  });
 
-$stmt = db()->prepare(
-  "INSERT INTO contacts (name, email, phone, message, ip_hash) VALUES (:n, :e, :p, :m, :h)"
-);
-$stmt->execute([
-  ':n' => trim((string)$p['name']),
-  ':e' => trim((string)$p['email']),
-  ':p' => trim((string)($p['phone'] ?? '')),
-  ':m' => trim((string)$p['message']),
-  ':h' => $ipHash,
-]);
-
-@mail(
-  $_ENV['MAIL_TO'] ?? 'info@speedison.se',
-  'Nytt kontaktmeddelande',
-  "Från: {$p['name']} <{$p['email']}>\n\n{$p['message']}",
-  "From: " . ($_ENV['MAIL_FROM'] ?? 'no-reply@speedison.se') . "\r\nReply-To: {$p['email']}"
-);
-
-echo json_encode(['ok'=>true]);
+  it("204 on filled honeypot", async () => {
+    const res = await POST(req({ name: "x", email: "x@y.z", message: "hi", honeypot: "bot" }));
+    expect(res.status).toBe(204);
+  });
+});
 ```
 
-- [ ] **Step 2: Commit + deploy**
+Run: `npm test` — expect FAIL.
+
+- [ ] **Step 2: Implement**
+
+`web/src/app/api/contact/route.ts`:
+
+```ts
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { sendContactEmail } from "@/lib/mailer";
+import { hashIp } from "@/lib/ratelimit";
+import { isAllowedOrigin } from "@/lib/server-origin";
+import { phoneSchema } from "@/lib/schemas";
+
+export const runtime = "nodejs";
+
+const ContactSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(120),
+  phone: phoneSchema.optional().or(z.literal("")),
+  message: z.string().trim().min(1).max(2000),
+  honeypot: z.literal(""),
+});
+
+function clientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for") ?? "unknown";
+}
+
+export async function POST(req: Request): Promise<Response> {
+  if (!isAllowedOrigin(req.headers.get("origin"))) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN_ORIGIN" }, { status: 403 });
+  }
+
+  let raw: unknown;
+  try { raw = await req.json(); }
+  catch { return NextResponse.json({ ok: false, error: "BAD_JSON" }, { status: 400 }); }
+
+  if (typeof raw === "object" && raw !== null && (raw as { honeypot?: unknown }).honeypot !== "") {
+    return new Response(null, { status: 204 });
+  }
+
+  const parsed = ContactSchema.safeParse(raw);
+  if (!parsed.success) {
+    const fields: Record<string, string> = {};
+    for (const issue of parsed.error.issues) fields[issue.path.join(".")] = issue.message;
+    return NextResponse.json({ ok: false, error: "VALIDATION_FAILED", fields }, { status: 400 });
+  }
+  const c = parsed.data;
+  const ipHash = hashIp(clientIp(req));
+
+  try {
+    await prisma.contact.create({
+      data: {
+        name: c.name,
+        email: c.email,
+        phone: c.phone || null,
+        message: c.message,
+        ipHash,
+      },
+    });
+  } catch (e) {
+    console.error("contact.insert", e);
+    return NextResponse.json({ ok: false, error: "DB_ERROR" }, { status: 500 });
+  }
+
+  void sendContactEmail({ name: c.name, email: c.email, phone: c.phone || undefined, message: c.message })
+    .catch((e) => console.error("contact.mail", e));
+
+  return NextResponse.json({ ok: true });
+}
+```
+
+Run tests (expect PASS): `npm test`.
+
+- [ ] **Step 3: Commit**
 
 ```bash
-git add api/contact.php
-git commit -m "feat(api): POST /contact endpoint"
-git push
+git add web/src/app/api/contact/route.ts web/test/api/contact.test.ts
+git commit -m "feat(web): POST /api/contact route handler with Prisma + Resend (TDD)"
 ```
 
 ---
@@ -4271,24 +4538,25 @@ git commit -m "feat(web): 301 redirects from legacy WordPress URLs"
 - [ ] **Step 1: Write runbook**
 
 ```markdown
-# DNS migration to Vercel
+# DNS migration to Railway
 
 ## T-7 days
 1. Take full backup of WordPress (files + DB) from Misshosting cPanel.
-2. Test staging URL `staging.speedison.se` (Vercel preview alias) — full QA pass.
+2. Verify Railway deploy is green; full QA pass on the Railway-generated URL (e.g. `speedison-production.up.railway.app`).
 3. Confirm GDPR text approved by stakeholder.
+4. Resend domain verification (SPF + DKIM + DMARC) is ✅ Verified — see Task 44.
 
 ## T-1 day
-1. Lower TTL on speedison.se A-record at Misshosting DNS to 300 s.
+1. Lower TTL on speedison.se A-record at the current DNS host to 300 s.
 2. Verify the lower TTL is live: `dig speedison.se` from a clean network.
 
 ## T-0 (cut-over day, ~10:00 SE)
-1. In Vercel project settings → Domains → add `speedison.se` and `www.speedison.se`.
-2. Update Misshosting DNS:
-   - A `speedison.se` → Vercel IP from Vercel UI
-   - CNAME `www` → `cname.vercel-dns.com`
-3. Verify: `dig speedison.se` returns Vercel IP within 5–10 min.
-4. Confirm SSL provisioning in Vercel UI (Let's Encrypt usually < 1 min).
+1. In Railway → service → Settings → Networking → Public Networking → "Custom Domain" → add `speedison.se` and `www.speedison.se`. Railway shows the target hostname/IP for each.
+2. Update DNS at the registrar:
+   - `A` (or `CNAME` if Railway gives you one) `speedison.se` → Railway target
+   - `CNAME` `www` → Railway target for www
+3. Verify: `dig speedison.se` returns the Railway target within 5–10 min.
+4. Confirm SSL provisioning in Railway (automatic, usually < 5 min).
 5. Smoke test: open https://speedison.se in incognito → hero loads.
 6. Submit a test lead → email arrives at info@speedison.se.
 
@@ -4297,14 +4565,15 @@ git commit -m "feat(web): 301 redirects from legacy WordPress URLs"
 2. Update Search Console (re-submit sitemap).
 
 ## Rollback (if disaster)
-1. Revert A-record back to original Misshosting IP.
+1. Revert A/CNAME record back to original Misshosting target.
 2. Wait 5–10 min for DNS to propagate.
-3. Old WordPress site is intact (we kept it untouched).
+3. Old WordPress site is intact (we kept it untouched at Misshosting).
 
 ## Email (MUST NOT BREAK)
-- MX records remain at Misshosting → unchanged.
-- SPF: ensure `v=spf1 include:misshosting include:_spf.vercel.com -all` if Vercel ever sends mail (currently no).
-- Test by sending a mail to info@speedison.se after cutover.
+- MX records remain at the current host (Misshosting or wherever info@speedison.se is delivered) → unchanged.
+- Outbound notifications now go via Resend; SPF must include `_spf.resend.com` (see Task 44).
+- DKIM record at `resend._domainkey.speedison.se` provides authentication.
+- Test inbox by sending a mail to info@speedison.se after cutover.
 ```
 
 - [ ] **Step 2: Commit**
@@ -4316,34 +4585,66 @@ git commit -m "docs: DNS migration runbook"
 
 ---
 
-### Task 44: SPF/DKIM verification (Misshosting)
+### Task 44: Resend domain verification (SPF + DKIM + DMARC)
+
+> **Architecture revision (2026-05-08):** Resend skickar mejl, inte Misshosting. Vi måste verifiera `speedison.se` i Resend så att SPF/DKIM/DMARC är korrekt — annars hamnar offert-mejlen i spam.
 
 **Files:**
-- Modify: `docs/runbook-dns-migration.md` (add SPF section)
+- Modify: `docs/runbook-dns-migration.md` (add Resend domain verification section)
 
-- [ ] **Step 1: Verify current SPF record at Misshosting**
+- [ ] **Step 1: Add domain in Resend dashboard**
 
-```bash
-dig speedison.se TXT +short
+In a browser:
+1. Log in to https://resend.com
+2. Domains → Add Domain → enter `speedison.se`
+3. Region: EU (closest to users)
+4. Resend shows you 3 DNS records to add: a TXT for SPF, a TXT for DKIM, and an optional MX or TXT for return-path. Copy them.
+
+- [ ] **Step 2: Add the records at the domain registrar**
+
+Where the `speedison.se` DNS lives today (likely Misshosting cPanel or .se-registrar):
+- Add `TXT` record at `@` for SPF (something like `v=spf1 include:_spf.resend.com ~all` — use the exact value Resend gives)
+- Add `TXT` record at `resend._domainkey` for DKIM (long base64 value Resend provides)
+- Add the optional MX or TXT for return-path if Resend asks (improves deliverability)
+
+If `speedison.se` already has an SPF record (from Misshosting), MERGE the includes — don't add a second SPF record. A domain may have only one. Combined example: `v=spf1 include:misshosting.se include:_spf.resend.com ~all`.
+
+- [ ] **Step 3: Add DMARC record** (one-time, even soft policy helps deliverability)
+
+```
+Type: TXT
+Host: _dmarc
+Value: v=DMARC1; p=none; rua=mailto:info@speedison.se
 ```
 
-Confirm there is an `v=spf1 ...` record. If absent or incomplete, ask Misshosting support to add one that authorizes the SMTP relay used by `mail()` from PHP.
+`p=none` = report-only. After 30 days of clean reports, raise to `p=quarantine` and later `p=reject`.
 
-- [ ] **Step 2: Verify DKIM**
+- [ ] **Step 4: Verify in Resend**
 
-```bash
-dig default._domainkey.speedison.se TXT +short
+In Resend dashboard, click "Verify". DNS propagation can take 5 min – 24 h. Status changes to ✅ Verified.
+
+- [ ] **Step 5: Send a test email**
+
+Use the production smoke test from T48 (after launch), or use Resend's "Send a test" button in the dashboard. Check Gmail/Outlook inbox AND spam folder. If spam: revisit DKIM record (often a copy-paste issue) and DMARC.
+
+- [ ] **Step 6: Document and commit**
+
+Append to `docs/runbook-dns-migration.md`:
+
+```markdown
+## Email deliverability
+
+Sender: Resend (resend.com), region EU.
+- SPF includes `_spf.resend.com`
+- DKIM record at `resend._domainkey.speedison.se`
+- DMARC at `_dmarc.speedison.se`, currently `p=none`
+
+MX records (inbox for info@speedison.se) remain unchanged at the existing email host.
 ```
-
-If empty, ask Misshosting to enable DKIM signing for outgoing mail from `info@speedison.se`.
-
-- [ ] **Step 3: Send test email** via the `leads.php` smoke-test (Task 34 step 5). Check Gmail/Outlook spam folder. If spam: revisit SPF/DKIM with Misshosting support.
-
-- [ ] **Step 4: Note status in runbook + commit**
 
 ```bash
 git add docs/runbook-dns-migration.md
-git commit -m "docs: capture SPF/DKIM verification steps"
+git commit -m "docs: Resend domain verification + SPF/DKIM/DMARC steps"
 ```
 
 ---
@@ -4375,14 +4676,24 @@ Scroll the hero. Frames should scrub smoothly.
 
 - [ ] **Step 4: Add a tracker file to keep frame dirs in repo state but not the frames**
 
-Frames are NOT committed (gitignored). On Vercel, the build produces them via the same `extract-frames.sh` step. Create a build-time step:
+Frames are NOT committed (gitignored — they're regenerated from the source video). For Railway deploys, the source video must be retrievable at build time. Two options:
 
-In `web/package.json` `scripts`, add:
+**Option A (recommended): commit the final 15-sec video to the repo via Git LFS.** Set up Git LFS once, track `*.mp4` under `scener/`, and Railway's checkout will include the file. Then the prebuild script can extract frames at build time.
+
+**Option B: host the video on Cloudflare R2 / S3 / a public URL** and download in prebuild. Adds an env var and a curl step.
+
+For Option A, in `web/package.json` `scripts`, add:
 ```json
 "prebuild": "test -f public/frames/720w/frame-001.webp || (cd .. && bash scripts/extract-frames.sh scener/final.mp4)"
 ```
 
-If `final.mp4` is too large to commit, host it in GitHub Releases or use Git LFS.
+For Option B, the prebuild becomes:
+```json
+"prebuild": "test -f public/frames/720w/frame-001.webp || (mkdir -p ../scener && curl -L -o ../scener/final.mp4 \"$VIDEO_SOURCE_URL\" && cd .. && bash scripts/extract-frames.sh scener/final.mp4)"
+```
+Then add `VIDEO_SOURCE_URL` to Railway env vars.
+
+Note: Railway's Nixpacks builder includes `ffmpeg` in many language preset images, but if the build fails because `ffmpeg` is missing, add a Nixpacks override (`nixpacks.toml`) that installs it. The implementer should verify this when running the first Railway build.
 
 - [ ] **Step 5: Confirm hot-spot pixel coordinates** in `web/src/lib/hotspots.ts` against the actual final frame ~440. Adjust `x`/`y` percentages.
 
@@ -4395,69 +4706,58 @@ git commit -m "feat(web): align hot-spots to final hero video frame"
 
 ---
 
-### Task 46: Vercel Analytics integration
+### Task 46: Lightweight in-app analytics (no third-party)
 
-**Files:**
-- Modify: `web/src/app/layout.tsx`
+> **Architecture revision (2026-05-08):** Vercel Analytics fungerar inte på Railway. Vi skippar tredjepartsanalytics i v1 (cost + cookie-fritt). Istället loggar vi ett par viktiga events client-side mot vår egen `/api/analytics` endpoint som bara skriver till en `events`-tabell. Tunt och kostnadsfritt.
+>
+> Alternativt: lägg till Plausible-script (~$9/mån cloud) eller Umami (self-hosted Railway-service, +1 service på Hobby). Båda är cookie-free. Båda kan plockas upp senare; ingen kod-ändring behövs nu utöver att lägga till ett script-tag i `layout.tsx`.
+
+**Files (om vi väljer "egen tabell"-lösningen):**
+- Modify: `web/prisma/schema.prisma` — add `Event` model
+- Create: `web/src/app/api/events/route.ts`
 - Create: `web/src/lib/analytics.ts`
 
-- [ ] **Step 1: Install Vercel Analytics**
+- [ ] **Step 1: Decide approach** (in conversation, not in code)
 
-```bash
-cd web
-npm install @vercel/analytics
-```
+Rekommendation för v1: **skippa analytics helt**. Lead-räkning sker via SQL-fråga mot `Lead`-tabellen ("hur många leads de senaste 30 dagarna?"). Det är vad ägaren faktiskt vill veta. Site-traffic-mätning kan vänta tills sajten är live och behöver det.
 
-- [ ] **Step 2: Wire into layout**
+Om beslutet ändras senare:
 
-```tsx
-import { Analytics } from "@vercel/analytics/react";
+- [ ] **Step 2 (om vi kör egen tabell):** Add `Event` model
 
-// Inside <body>, after <Footer/>:
-<Analytics />
-```
+```prisma
+model Event {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  name      String   @db.VarChar(60)
+  props     Json?
+  ipHash    String   @db.VarChar(64) @map("ip_hash")
 
-- [ ] **Step 3: Custom events helper `web/src/lib/analytics.ts`**
-
-```ts
-import { track } from "@vercel/analytics";
-
-export function trackEvent(name: string, props?: Record<string, string | number | boolean>) {
-  if (typeof window === "undefined") return;
-  try { track(name, props); } catch { /* swallow */ }
+  @@index([name, createdAt])
+  @@map("events")
 }
 ```
 
-- [ ] **Step 4: Fire events**
+Run `npx prisma migrate dev --name add_events`.
 
-In `HeroScrub.tsx`, when progress crosses 0.99:
-```ts
-import { trackEvent } from "@/lib/analytics";
-const fired = useRef(false);
-useEffect(() => {
-  if (!fired.current && progress > 0.99) { fired.current = true; trackEvent("hero_completed"); }
-}, [progress]);
-```
+- [ ] **Step 3 (om vi kör egen tabell):** Create `web/src/app/api/events/route.ts` — small POST handler that inserts an Event with hashed IP, no PII.
 
-In `HotSpotLayer`, on activation:
-```ts
-import { trackEvent } from "@/lib/analytics";
-onActivate={(s) => { trackEvent("hotspot_clicked", { service: s }); preselect(s); }}
-```
+- [ ] **Step 4 (om vi kör egen tabell):** Create `web/src/lib/analytics.ts` with a `track(name, props)` function that does `fetch("/api/events", { method: "POST", body: JSON.stringify({name, props}) })` (debounced, fire-and-forget).
 
-In `Configurator`, on step transitions and submission:
-```ts
-useEffect(() => { trackEvent("configurator_step_completed", { step }); }, [step]);
-// in StepContact onSubmit success: trackEvent("lead_submitted", { ref });
-// in StepContact onSubmit failure: trackEvent("lead_failed", { reason });
-```
+- [ ] **Step 5 (om vi kör egen tabell):** Fire events at key points:
+  - `HeroScrub`: when `progress > 0.99` once → `track("hero_completed")`
+  - `HotSpotLayer`: on activate → `track("hotspot_clicked", { service })`
+  - `Configurator`: on step change → `track("configurator_step", { step })`
+  - `StepContact`: on submit success/fail → `track("lead_submitted" | "lead_failed")`
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit (whichever path was chosen)**
 
 ```bash
 git add web/
-git commit -m "feat(web): Vercel Analytics + custom events"
+git commit -m "feat(web): in-app analytics (or no-op for v1)"
 ```
+
+**Default action for v1: do nothing. Skip this task entirely and revisit when there's a real question to answer.**
 
 ---
 
@@ -4499,17 +4799,17 @@ git commit -m "feat(web): Vercel Analytics + custom events"
 
 **Files:** none (operational)
 
-- [ ] **Step 1: Confirm GitHub Actions deploys are green** (web-tests, lighthouse, deploy-api).
+- [ ] **Step 1: Confirm CI is green** (web-tests, lighthouse). Confirm Railway last-deploy is ✅ Deployed and healthcheck is healthy.
 
 - [ ] **Step 2: Run DNS migration runbook** (`docs/runbook-dns-migration.md`).
 
 - [ ] **Step 3: Smoke test post-cutover**
 
-Open https://speedison.se in a clean browser. Submit a real test lead. Verify the email arrives. Verify lead appears in `leads` table on Misshosting.
+Open https://speedison.se in a clean browser. Submit a real test lead. Verify the email arrives at info@speedison.se via Resend. Verify lead appears in the `leads` table on the Railway MySQL plugin (Railway dashboard → MySQL → Data tab).
 
 - [ ] **Step 4: Monitor for 24 h**
 
-Check Vercel Analytics dashboard, error logs (Vercel + Misshosting), email deliverability.
+Check Railway service logs (Deployments → Logs) for errors, Resend dashboard for email deliverability rate, and the `leads` table count for inflow.
 
 - [ ] **Step 5: Tag the release**
 
@@ -4526,7 +4826,7 @@ git push --tags
 
 - [ ] **Step 1: Document rollback path**
 
-In `docs/runbook-dns-migration.md` confirm the WordPress install at Misshosting's original location is untouched. Note its directory path and DB name as escape hatch.
+In `docs/runbook-dns-migration.md` confirm the WordPress install at Misshosting's original location is untouched. Note its directory path and DB name as escape hatch. The Railway service stays running in parallel; the rollback is purely a DNS change.
 
 - [ ] **Step 2: Calendar reminder**
 
