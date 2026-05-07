@@ -38,9 +38,9 @@ describe("LeadSchema", () => {
 
 describe("contactInfoSchema", () => {
   it("accepts a Swedish phone", () => {
-    expect(contactInfoSchema.safeParse({ name:"E", phone:"070 123 45 67", email:"a@b.se" }).success).toBe(true);
+    expect(contactInfoSchema.safeParse({ name:"Er", phone:"070 123 45 67", email:"a@b.se" }).success).toBe(true);
   });
   it("rejects 5-digit phone", () => {
-    expect(contactInfoSchema.safeParse({ name:"E", phone:"12345", email:"a@b.se" }).success).toBe(false);
+    expect(contactInfoSchema.safeParse({ name:"Er", phone:"12345", email:"a@b.se" }).success).toBe(false);
   });
 });

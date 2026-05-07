@@ -9,7 +9,7 @@ export const phoneSchema = z.string().trim().min(7).max(20)
   .refine(v => v.replace(/\D/g, "").length >= 7, "För kort telefonnummer");
 
 export const contactInfoSchema = z.object({
-  name: z.string().trim().min(1, "Namn krävs").max(120),
+  name: z.string().trim().min(2, "För kort namn").max(120),
   phone: phoneSchema,
   email: z.email("Ogiltig e-postadress").max(120),
   message: z.string().max(1000).optional().default(""),
