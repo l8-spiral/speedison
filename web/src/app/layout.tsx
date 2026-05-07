@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
+
+const display = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["300", "400"],
+  variable: "--font-display",
+});
+
+const body = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: "Speedison — Performance reimagined",
@@ -8,8 +21,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sv">
-      <body className="antialiased bg-black text-stone-100">{children}</body>
+    <html lang="sv" className={`${display.variable} ${body.variable}`}>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
