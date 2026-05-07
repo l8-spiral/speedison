@@ -3,6 +3,7 @@ import { HeroScrub, ActOverlay, HotSpotLayer, HeroStatic } from "@/components/he
 import { CursorSpotlight } from "@/components/effects/CursorSpotlight";
 import { ParallaxLayer } from "@/components/effects/ParallaxLayer";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { StageChapter, PopsBangsChapter, EmissionsChapter, ExhaustChapter } from "@/components/chapter/chapters";
 
 export default function Home() {
   return (
@@ -15,8 +16,12 @@ export default function Home() {
           <HotSpotLayer onActivate={(s) => { console.log("hot-spot:", s); }} />
         </HeroScrub>
       </ErrorBoundary>
-      <section className="min-h-screen flex items-center justify-center bg-noir-900">
-        <p className="text-copper-300">More to come…</p>
+
+      <section id="tjanster">
+        <StageChapter />
+        <PopsBangsChapter />
+        <EmissionsChapter />
+        <ExhaustChapter />
       </section>
     </main>
   );
