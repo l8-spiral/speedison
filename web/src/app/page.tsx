@@ -4,6 +4,7 @@ import { CursorSpotlight } from "@/components/effects/CursorSpotlight";
 import { ParallaxLayer } from "@/components/effects/ParallaxLayer";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { StageChapter, PopsBangsChapter, EmissionsChapter, ExhaustChapter } from "@/components/chapter/chapters";
+import { PortfolioGallery } from "@/components/ui/PortfolioGallery";
 
 export default function Home() {
   return (
@@ -23,6 +24,8 @@ export default function Home() {
         <EmissionsChapter />
         <ExhaustChapter />
       </section>
+
+      <PortfolioGallery />
     </main>
   );
 }
