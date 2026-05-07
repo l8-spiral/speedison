@@ -1,12 +1,14 @@
 "use client";
 import { HeroScrub, ActOverlay, HotSpotLayer } from "@/components/hero-scrub";
 import { CursorSpotlight } from "@/components/effects/CursorSpotlight";
+import { ParallaxLayer } from "@/components/effects/ParallaxLayer";
 
 export default function Home() {
   return (
     <main>
       <CursorSpotlight />
       <HeroScrub>
+        <ParallaxLayer />
         <ActOverlay />
         <HotSpotLayer onActivate={(s) => { console.log("hot-spot:", s); }} />
       </HeroScrub>
