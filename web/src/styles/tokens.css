@@ -13,9 +13,6 @@
   --color-text-primary: #f0e0c8;
   --color-text-muted:   #888888;
 
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-body: "Inter", system-ui, sans-serif;
-
   --ease-cinematic: cubic-bezier(0.23, 1, 0.32, 1);
   --duration-slow: 900ms;
   --duration-mid: 600ms;

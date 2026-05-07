@@ -6,12 +6,14 @@ const display = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400"],
   variable: "--font-display",
+  fallback: ["Georgia", "serif"],
 });
 
 const body = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   variable: "--font-body",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export const metadata: Metadata = {
