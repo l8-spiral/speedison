@@ -1,0 +1,41 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+
+# build
+.next/
+out/
+dist/
+build/
+
+# env
+.env*.local
+.env
+
+# testing
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+
+# claude / brainstorm artifacts
+.claude/
+.superpowers/
+
+# scener (large source videos)
+scener/
+
+# extracted frames (regenerated from source video)
+web/public/frames/*/frame-*.webp
+
+# logs
+*.log
