@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
+import { SmoothScroll } from "@/components/lenis/SmoothScroll";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="sv" className={`${display.variable} ${body.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased"><SmoothScroll>{children}</SmoothScroll></body>
     </html>
   );
 }
