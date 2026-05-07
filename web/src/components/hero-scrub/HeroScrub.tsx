@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FrameSequence } from "./FrameSequence";
+import { HeroStatic } from "./HeroStatic";
 
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
 
@@ -18,18 +19,22 @@ function pickWidth(): 1920 | 1280 | 720 {
 }
 
 export function HeroScrub({ children }: { children?: React.ReactNode }) {
+  const [reduced, setReduced] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [width, setWidth] = useState<1920 | 1280 | 720>(1280);
 
+  useEffect(() => {
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+
   useEffect(() => { setWidth(pickWidth()); }, []);
 
   useEffect(() => {
+    if (reduced) return;
     const stage = stageRef.current;
     if (!stage) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) { setProgress(0.5); return; }
 
     const trigger = ScrollTrigger.create({
       trigger: stage,
@@ -39,7 +44,9 @@ export function HeroScrub({ children }: { children?: React.ReactNode }) {
       onUpdate: (self) => setProgress(self.progress),
     });
     return () => trigger.kill();
-  }, []);
+  }, [reduced]);
+
+  if (reduced) return <HeroStatic />;
 
   return (
     <section
