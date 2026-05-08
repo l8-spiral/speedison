@@ -6,8 +6,11 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { StageChapter, PopsBangsChapter, EmissionsChapter, ExhaustChapter } from "@/components/chapter/chapters";
 import { PortfolioGallery } from "@/components/ui/PortfolioGallery";
 import { FAQ } from "@/components/ui/FAQ";
+import { Configurator } from "@/components/configurator/Configurator";
+import { useConfiguratorStore } from "@/components/configurator/store";
 
 export default function Home() {
+  const preselect = useConfiguratorStore((s) => s.preselectFromHotspot);
   return (
     <main>
       <CursorSpotlight />
@@ -15,7 +18,12 @@ export default function Home() {
         <HeroScrub>
           <ParallaxLayer />
           <ActOverlay />
-          <HotSpotLayer onActivate={(s) => { console.log("hot-spot:", s); }} />
+          <HotSpotLayer
+            onActivate={(s) => {
+              preselect(s);
+              document.getElementById("konfigurator")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
         </HeroScrub>
       </ErrorBoundary>
 
@@ -27,6 +35,7 @@ export default function Home() {
       </section>
 
       <PortfolioGallery />
+      <Configurator />
       <FAQ />
     </main>
   );
