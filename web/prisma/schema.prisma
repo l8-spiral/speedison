@@ -1,0 +1,53 @@
+// Speedison data model. Migrations are generated with
+//   npx prisma migrate dev --name <change>
+// and applied at Railway deploy time via `prisma migrate deploy`
+// (configured in /railway.json's buildCommand).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id        Int        @id @default(autoincrement())
+  createdAt DateTime   @default(now()) @map("created_at")
+  ref       String     @unique @db.VarChar(20)
+  make      String     @db.VarChar(50)
+  model     String     @db.VarChar(100)
+  engine    String?    @db.VarChar(200)
+  year      Int?       @db.SmallInt
+  services  Json
+  name      String     @db.VarChar(120)
+  phone     String     @db.VarChar(40)
+  email     String     @db.VarChar(120)
+  message   String?    @db.Text
+  ipHash    String     @db.VarChar(64) @map("ip_hash")
+  status    LeadStatus @default(NEW)
+
+  @@index([ipHash, createdAt])
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  DONE
+  LOST
+}
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  name      String   @db.VarChar(120)
+  email     String   @db.VarChar(120)
+  phone     String?  @db.VarChar(40)
+  message   String   @db.Text
+  ipHash    String   @db.VarChar(64) @map("ip_hash")
+
+  @@map("contacts")
+}
