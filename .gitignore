@@ -39,3 +39,4 @@ web/public/frames/*/frame-*.webp
 
 # logs
 *.log
+.lighthouseci/
