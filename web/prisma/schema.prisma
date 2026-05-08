@@ -51,3 +51,17 @@ model Contact {
 
   @@map("contacts")
 }
+
+// Lightweight event log: hero_completed, hotspot_clicked, configurator_step,
+// lead_submitted, lead_failed. No PII, no tracking cookie. Query in plain
+// SQL when we want funnel numbers.
+model Event {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  name      String   @db.VarChar(60)
+  props     Json?
+  ipHash    String   @db.VarChar(64) @map("ip_hash")
+
+  @@index([name, createdAt])
+  @@map("events")
+}

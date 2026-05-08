@@ -4,6 +4,7 @@ import { useConfiguratorStore } from "./store";
 import { LeadSchema } from "@/lib/schemas";
 import { submitLead } from "@/lib/api";
 import { getPriceRange, formatPriceRange, getService } from "@/lib/pricing";
+import { track } from "@/lib/analytics";
 
 export function StepContact() {
   const state = useConfiguratorStore();
@@ -41,11 +42,14 @@ export function StepContact() {
     try {
       const res = await submitLead(parsed.data);
       if (res.ok) {
+        track("lead_submitted", { ref: res.ref });
         window.location.href = `/tack?ref=${encodeURIComponent(res.ref)}`;
       } else {
+        track("lead_failed", { reason: res.error });
         setErrors({ _: "Det gick inte att skicka. Vänligen ring 08-33 33 46." });
       }
     } catch {
+      track("lead_failed", { reason: "network" });
       setErrors({ _: "Det gick inte att nå servern. Ring 08-33 33 46 eller mejla info@speedison.se." });
     } finally {
       setSubmitting(false);

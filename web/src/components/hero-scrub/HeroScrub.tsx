@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FrameSequence } from "./FrameSequence";
 import { HeroStatic } from "./HeroStatic";
+import { track } from "@/lib/analytics";
 
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
 
@@ -24,6 +25,7 @@ export function HeroScrub({ children }: { children?: React.ReactNode }) {
   const stickyRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [width, setWidth] = useState<1920 | 1280 | 720>(1280);
+  const heroCompletedFiredRef = useRef(false);
 
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -45,6 +47,14 @@ export function HeroScrub({ children }: { children?: React.ReactNode }) {
     });
     return () => trigger.kill();
   }, [reduced]);
+
+  // Fire `hero_completed` once when the user scrubs past 99% of the hero stage
+  useEffect(() => {
+    if (heroCompletedFiredRef.current) return;
+    if (progress < 0.99) return;
+    heroCompletedFiredRef.current = true;
+    track("hero_completed");
+  }, [progress]);
 
   if (reduced) return <HeroStatic />;
 

@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { useConfiguratorStore } from "./store";
 import { ProgressBar } from "./ProgressBar";
 import { StepMake } from "./StepMake";
@@ -6,9 +7,23 @@ import { StepModel } from "./StepModel";
 import { StepEngine } from "./StepEngine";
 import { StepServices } from "./StepServices";
 import { StepContact } from "./StepContact";
+import { track } from "@/lib/analytics";
 
 export function Configurator() {
   const step = useConfiguratorStore((s) => s.step);
+  const lastTrackedStep = useRef<number>(0);
+
+  // Emit configurator_step once per step transition (skipping the initial mount).
+  useEffect(() => {
+    if (lastTrackedStep.current === 0) {
+      lastTrackedStep.current = step;
+      return;
+    }
+    if (step !== lastTrackedStep.current) {
+      lastTrackedStep.current = step;
+      track("configurator_step", { step });
+    }
+  }, [step]);
 
   return (
     <section id="konfigurator" className="bg-noir-950 py-32 px-6 md:px-12">

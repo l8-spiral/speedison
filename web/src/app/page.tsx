@@ -8,6 +8,7 @@ import { PortfolioGallery } from "@/components/ui/PortfolioGallery";
 import { FAQ } from "@/components/ui/FAQ";
 import { Configurator } from "@/components/configurator/Configurator";
 import { useConfiguratorStore } from "@/components/configurator/store";
+import { track } from "@/lib/analytics";
 
 export default function Home() {
   const preselect = useConfiguratorStore((s) => s.preselectFromHotspot);
@@ -20,6 +21,7 @@ export default function Home() {
           <ActOverlay />
           <HotSpotLayer
             onActivate={(s) => {
+              track("hotspot_clicked", { service: s });
               preselect(s);
               document.getElementById("konfigurator")?.scrollIntoView({ behavior: "smooth" });
             }}
