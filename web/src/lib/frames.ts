@@ -1,6 +1,7 @@
 // Matches the count produced by scripts/extract-frames.mjs on the current
-// hero video (15.13 s × 30 fps ≈ 454). Update when the video changes (T45).
-export const TOTAL_FRAMES = 454;
+// hero video (AlmostPerfektFull.mp4 — 17.93 s × 30 fps = 538). Update when
+// the video changes (see docs/runbooks/hero-video-swap.md).
+export const TOTAL_FRAMES = 538;
 
 export const ACT_RANGES = {
   I:   { from: 0,    to: 1 / 3 },
