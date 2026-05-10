@@ -12,8 +12,7 @@ export function StageChapter() {
         "Bättre bränsleekonomi vid normal körning",
         "Originalfilen sparas — alltid återställbart",
       ]}
-      serviceSlugs={["stage1","stage2"]}
-      priceFrom={null} priceTo={null}
+      serviceSlugs={["stage1", "stage2"]}
       align="left"
     />
   );
@@ -31,7 +30,6 @@ export function PopsBangsChapter() {
         "Påverkar inte garantin på avgassystemet",
       ]}
       serviceSlugs={["popsBangs"]}
-      priceFrom={2995} priceTo={null}
       align="right"
     />
   );
@@ -44,8 +42,7 @@ export function EmissionsChapter() {
       eyebrow="Kapitel III"
       title="EGR · DPF · AdBlue · NOx"
       body="Mjukvaruanpassningar för att exkludera utsläppskomponenter — där det är lagligt och lämpligt. Vi går igenom konsekvenser och garantipåverkan innan vi börjar."
-      serviceSlugs={["egrOff","dpfOff","adblueOff","noxOff"]}
-      priceFrom={1995} priceTo={null}
+      serviceSlugs={["egrOff", "dpfOff", "adblueOff", "noxOff"]}
       align="left"
     />
   );
@@ -59,7 +56,6 @@ export function ExhaustChapter() {
       title="Avgassystem"
       body="Muffler delete eller specialtillverkat ombygge av befintligt avgassystem. Bättre flöde, bättre ljud och en silhuett som matchar resten av bilen."
       serviceSlugs={["exhaust"]}
-      priceFrom={null} priceTo={null}
       align="right"
     />
   );

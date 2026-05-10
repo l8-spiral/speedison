@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getService } from "./pricing";
 
 let _resend: Resend | null = null;
 function client(): Resend {
@@ -11,9 +12,10 @@ function client(): Resend {
 
 export type LeadEmailInput = {
   ref: string;
-  vehicle: { make: string; model: string; engine?: string; year?: number | null };
+  regNumber: string;
   services: string[];
-  contact: { name: string; phone: string; email: string; message?: string };
+  contact: { name: string; phone: string; email: string };
+  description?: string;
 };
 
 export async function sendLeadEmail(
@@ -22,23 +24,22 @@ export async function sendLeadEmail(
   const to = process.env.MAIL_TO ?? "info@speedison.se";
   const from = process.env.MAIL_FROM ?? "Speedison <noreply@speedison.se>";
 
-  const services = lead.services.join(", ");
-  const yearStr = lead.vehicle.year ? ` (${lead.vehicle.year})` : "";
-  const messageLines = (lead.contact.message ?? "").split("\n").join("\n> ");
+  const serviceNames = lead.services
+    .map((slug) => getService(slug as Parameters<typeof getService>[0])?.name ?? slug)
+    .join(", ");
+  const descriptionLines = (lead.description ?? "").trim();
+  const descriptionBlock = descriptionLines
+    ? `Beskrivning:\n> ${descriptionLines.split("\n").join("\n> ")}\n\n`
+    : "";
 
-  const text = `Märke:        ${lead.vehicle.make}
-Modell:       ${lead.vehicle.model}
-Motor:        ${lead.vehicle.engine ?? ""}${yearStr}
-Tjänster:     ${services}
+  const text = `Reg.nr:       ${lead.regNumber}
+Tjänster:     ${serviceNames}
 
 Kontakt:      ${lead.contact.name}
 Telefon:      ${lead.contact.phone}
 E-post:       ${lead.contact.email}
 
-Meddelande:
-> ${messageLines}
-
-Mottaget:     ${new Date().toISOString().replace("T", " ").slice(0, 16)}
+${descriptionBlock}Mottaget:     ${new Date().toISOString().replace("T", " ").slice(0, 16)}
 Ärendenr:     ${lead.ref}
 `;
 
@@ -47,7 +48,7 @@ Mottaget:     ${new Date().toISOString().replace("T", " ").slice(0, 16)}
       from,
       to: [to],
       replyTo: lead.contact.email,
-      subject: `[${lead.ref}] Ny offertförfrågan – ${lead.vehicle.make} ${lead.vehicle.model}`,
+      subject: `[${lead.ref}] Ny offertförfrågan – ${lead.regNumber}`,
       text,
     });
     if (result.error) return { error: result.error.message ?? "send_failed" };

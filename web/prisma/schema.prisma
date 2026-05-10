@@ -13,20 +13,17 @@ datasource db {
 }
 
 model Lead {
-  id        Int        @id @default(autoincrement())
-  createdAt DateTime   @default(now()) @map("created_at")
-  ref       String     @unique @db.VarChar(20)
-  make      String     @db.VarChar(50)
-  model     String     @db.VarChar(100)
-  engine    String?    @db.VarChar(200)
-  year      Int?       @db.SmallInt
-  services  Json
-  name      String     @db.VarChar(120)
-  phone     String     @db.VarChar(40)
-  email     String     @db.VarChar(120)
-  message   String?    @db.Text
-  ipHash    String     @db.VarChar(64) @map("ip_hash")
-  status    LeadStatus @default(NEW)
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now()) @map("created_at")
+  ref         String     @unique @db.VarChar(20)
+  regNumber   String     @db.VarChar(20) @map("reg_number")
+  services    Json
+  name        String     @db.VarChar(120)
+  phone       String     @db.VarChar(40)
+  email       String     @db.VarChar(120)
+  description String?    @db.Text
+  ipHash      String     @db.VarChar(64) @map("ip_hash")
+  status      LeadStatus @default(NEW)
 
   @@index([ipHash, createdAt])
   @@map("leads")

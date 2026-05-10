@@ -4,17 +4,8 @@ import { useConfiguratorStore } from "@/components/configurator/store";
 describe("configuratorStore", () => {
   beforeEach(() => useConfiguratorStore.getState().reset());
 
-  it("starts at step 1 with empty state", () => {
-    const s = useConfiguratorStore.getState();
-    expect(s.step).toBe(1);
-    expect(s.selectedServices).toEqual([]);
-  });
-
-  it("setMake advances to step 2", () => {
-    useConfiguratorStore.getState().setMake("Mercedes");
-    const s = useConfiguratorStore.getState();
-    expect(s.vehicle.make).toBe("Mercedes");
-    expect(s.step).toBe(2);
+  it("starts with no services selected", () => {
+    expect(useConfiguratorStore.getState().selectedServices).toEqual([]);
   });
 
   it("addService toggles in selectedServices", () => {
@@ -25,17 +16,25 @@ describe("configuratorStore", () => {
     expect(useConfiguratorStore.getState().selectedServices).toEqual([]);
   });
 
-  it("preselectFromHotspot adds the service and jumps to step 3", () => {
-    useConfiguratorStore.getState().preselectFromHotspot("popsBangs");
-    const s = useConfiguratorStore.getState();
-    expect(s.selectedServices).toEqual(["popsBangs"]);
-    expect(s.step).toBe(3);
+  it("setServices replaces the whole list", () => {
+    useConfiguratorStore.getState().setServices(["stage1", "popsBangs"]);
+    expect(useConfiguratorStore.getState().selectedServices).toEqual(["stage1", "popsBangs"]);
   });
 
-  it("preselectFromHotspot 'emissionsOff' adds egrOff and jumps to step 4", () => {
+  it("preselectFromHotspot adds the service without removing existing ones", () => {
+    useConfiguratorStore.getState().addService("stage1");
+    useConfiguratorStore.getState().preselectFromHotspot("popsBangs");
+    expect(useConfiguratorStore.getState().selectedServices).toEqual(["stage1", "popsBangs"]);
+  });
+
+  it("preselectFromHotspot 'emissionsOff' adds egrOff as the representative slug", () => {
     useConfiguratorStore.getState().preselectFromHotspot("emissionsOff");
-    const s = useConfiguratorStore.getState();
-    expect(s.selectedServices).toContain("egrOff");
-    expect(s.step).toBe(4);
+    expect(useConfiguratorStore.getState().selectedServices).toContain("egrOff");
+  });
+
+  it("preselectFromHotspot is a no-op if the service is already selected", () => {
+    useConfiguratorStore.getState().addService("stage1");
+    useConfiguratorStore.getState().preselectFromHotspot("stage1");
+    expect(useConfiguratorStore.getState().selectedServices).toEqual(["stage1"]);
   });
 });

@@ -1,12 +1,26 @@
 import { z } from "zod";
 
 const SERVICE_SLUGS = [
-  "stage1","stage2","popsBangs","egrOff","dpfOff","adblueOff","noxOff","exhaust"
+  "stage1", "stage2", "popsBangs", "egrOff",
+  "dpfOff", "adblueOff", "noxOff", "exhaust",
 ] as const;
 
-export const phoneSchema = z.string().trim().min(7).max(20)
+export const phoneSchema = z
+  .string()
+  .trim()
+  .min(7)
+  .max(20)
   .regex(/^[+\d\s\-()]+$/, "Ogiltigt telefonnummer")
-  .refine(v => v.replace(/\D/g, "").length >= 7, "För kort telefonnummer");
+  .refine((v) => v.replace(/\D/g, "").length >= 7, "För kort telefonnummer");
+
+// Swedish reg plate: 6 chars typical, but allow 2–10 for foreign / personalised plates.
+// Letters + digits only, optional internal space.
+export const regNumberSchema = z
+  .string()
+  .trim()
+  .min(2, "För kort registreringsnummer")
+  .max(10, "För långt registreringsnummer")
+  .regex(/^[A-Za-zÅÄÖåäö0-9 ]+$/, "Ogiltigt registreringsnummer");
 
 export const contactInfoSchema = z.object({
   name: z.string().trim().min(2, "För kort namn").max(120),
@@ -15,17 +29,15 @@ export const contactInfoSchema = z.object({
   message: z.string().max(1000).optional().default(""),
 });
 
-export const vehicleSchema = z.object({
-  make: z.string().trim().min(1).max(100),
-  model: z.string().trim().min(1).max(100),
-  engine: z.string().trim().max(200).optional().default(""),
-  year: z.number().int().min(1980).max(new Date().getFullYear() + 1).optional(),
-});
-
 export const LeadSchema = z.object({
-  vehicle: vehicleSchema,
+  regNumber: regNumberSchema,
   services: z.array(z.enum(SERVICE_SLUGS)).min(1, "Välj minst en tjänst"),
-  contact: contactInfoSchema,
+  contact: z.object({
+    name: z.string().trim().min(2, "För kort namn").max(120),
+    phone: phoneSchema,
+    email: z.email("Ogiltig e-postadress").max(120),
+  }),
+  description: z.string().trim().max(2000).optional().default(""),
   gdprConsent: z.literal(true, { error: "Du måste godkänna integritetspolicyn" }),
   honeypot: z.literal(""),
 });

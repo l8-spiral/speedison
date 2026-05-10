@@ -78,15 +78,12 @@ export async function POST(req: Request): Promise<Response> {
     created = await prisma.lead.create({
       data: {
         ref,
-        make: lead.vehicle.make,
-        model: lead.vehicle.model,
-        engine: lead.vehicle.engine ?? null,
-        year: lead.vehicle.year ?? null,
+        regNumber: lead.regNumber,
         services: lead.services as unknown as Prisma.InputJsonValue,
         name: lead.contact.name,
         phone: lead.contact.phone,
         email: lead.contact.email,
-        message: lead.contact.message ?? null,
+        description: lead.description || null,
         ipHash,
       },
     });
@@ -98,9 +95,10 @@ export async function POST(req: Request): Promise<Response> {
   // Best-effort email — never fail the request because of this
   void sendLeadEmail({
     ref: created.ref,
-    vehicle: lead.vehicle,
+    regNumber: lead.regNumber,
     services: lead.services,
     contact: lead.contact,
+    description: lead.description,
   }).catch((e) => console.error("leads.mail", e));
 
   return NextResponse.json({ ok: true, leadId: created.id, ref: created.ref });

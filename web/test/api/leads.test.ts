@@ -15,9 +15,10 @@ vi.mock("@/lib/mailer", () => ({
 }));
 
 const validBody = {
-  vehicle: { make: "Mercedes", model: "AMG A45", engine: "M139", year: 2022 },
+  regNumber: "ABC123",
   services: ["stage2", "popsBangs"],
-  contact: { name: "Erik", phone: "+46701234567", email: "e@x.se", message: "" },
+  contact: { name: "Erik", phone: "+46701234567", email: "e@x.se" },
+  description: "Vill ha Stage 2 + Pops & Bangs.",
   gdprConsent: true,
   honeypot: "",
 };

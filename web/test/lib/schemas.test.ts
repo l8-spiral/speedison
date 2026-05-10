@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { LeadSchema, contactInfoSchema } from "@/lib/schemas";
+import { LeadSchema, contactInfoSchema, regNumberSchema } from "@/lib/schemas";
 
 const validLead = {
-  vehicle: { make: "Mercedes", model: "AMG A45", engine: "M139", year: 2022 },
+  regNumber: "ABC123",
   services: ["stage2", "popsBangs"],
-  contact: { name: "Erik", phone: "+46701234567", email: "e@x.se", message: "" },
+  contact: { name: "Erik", phone: "+46701234567", email: "e@x.se" },
+  description: "",
   gdprConsent: true,
-  honeypot: ""
+  honeypot: "",
 };
 
 describe("LeadSchema", () => {
@@ -20,8 +21,16 @@ describe("LeadSchema", () => {
     expect(r.success).toBe(false);
   });
 
+  it("rejects missing reg number", () => {
+    const r = LeadSchema.safeParse({ ...validLead, regNumber: "" });
+    expect(r.success).toBe(false);
+  });
+
   it("rejects invalid email", () => {
-    const r = LeadSchema.safeParse({ ...validLead, contact: { ...validLead.contact, email: "nope" } });
+    const r = LeadSchema.safeParse({
+      ...validLead,
+      contact: { ...validLead.contact, email: "nope" },
+    });
     expect(r.success).toBe(false);
   });
 
@@ -34,13 +43,38 @@ describe("LeadSchema", () => {
     const r = LeadSchema.safeParse({ ...validLead, honeypot: "spam" });
     expect(r.success).toBe(false);
   });
+
+  it("accepts a description up to 2000 chars", () => {
+    const desc = "x".repeat(2000);
+    const r = LeadSchema.safeParse({ ...validLead, description: desc });
+    expect(r.success).toBe(true);
+  });
+});
+
+describe("regNumberSchema", () => {
+  it("accepts a Swedish plate like ABC123", () => {
+    expect(regNumberSchema.safeParse("ABC123").success).toBe(true);
+  });
+  it("accepts a plate with internal space", () => {
+    expect(regNumberSchema.safeParse("ABC 123").success).toBe(true);
+  });
+  it("rejects a plate with special chars", () => {
+    expect(regNumberSchema.safeParse("ABC-123!").success).toBe(false);
+  });
+  it("rejects an empty plate", () => {
+    expect(regNumberSchema.safeParse("").success).toBe(false);
+  });
 });
 
 describe("contactInfoSchema", () => {
   it("accepts a Swedish phone", () => {
-    expect(contactInfoSchema.safeParse({ name:"Er", phone:"070 123 45 67", email:"a@b.se" }).success).toBe(true);
+    expect(
+      contactInfoSchema.safeParse({ name: "Er", phone: "070 123 45 67", email: "a@b.se" }).success
+    ).toBe(true);
   });
   it("rejects 5-digit phone", () => {
-    expect(contactInfoSchema.safeParse({ name:"Er", phone:"12345", email:"a@b.se" }).success).toBe(false);
+    expect(
+      contactInfoSchema.safeParse({ name: "Er", phone: "12345", email: "a@b.se" }).success
+    ).toBe(false);
   });
 });
