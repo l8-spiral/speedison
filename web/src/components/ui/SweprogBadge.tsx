@@ -1,75 +1,33 @@
 "use client";
-import { useRef, useState } from "react";
 
 // Sticky "Built by SWEPROG" credit badge.
-// - Fixed bottom-left, away from the SoundToggle (bottom-right).
-// - The "S" spins continuously on Y axis (3D rotation, not 2D — there's a
-//   subtle perspective so the letter has thickness).
-// - On hover, the whole badge tilts to follow the cursor (perspective +
-//   mouse-tracked rotateX/Y), giving the "alive" feel.
-// - Purple accent (#a855f7) on the S itself and the hover glow, matching
-//   SWEPROG's brand mark.
+// - Fixed bottom-left, opposite the SoundToggle.
+// - Compact height — single text line stacked label + name.
+// - Only the "S" animates: continuous Y-axis rotation + purple pulse
+//   (glow expanding and contracting). Badge stays calm.
 
 export function SweprogBadge() {
-  const ref = useRef<HTMLAnchorElement>(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, hover: false });
-
-  function handleMove(e: React.MouseEvent<HTMLAnchorElement>) {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ rx: y * -18, ry: x * 22, hover: true });
-  }
-
-  function handleLeave() {
-    setTilt({ rx: 0, ry: 0, hover: false });
-  }
-
   return (
     <a
-      ref={ref}
       href="https://sweprog.se"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Built by SWEPROG"
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
       className="fixed bottom-6 left-6 z-50 group select-none"
-      style={{
-        perspective: "600px",
-        transformStyle: "preserve-3d",
-      }}
     >
-      <div
-        className="flex items-center gap-3 rounded-full border border-purple-500/30 bg-noir-900/80 backdrop-blur-md pl-2 pr-5 py-2 transition-all duration-300"
-        style={{
-          transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-          transformStyle: "preserve-3d",
-          boxShadow: tilt.hover
-            ? "0 0 32px rgba(168, 85, 247, 0.45), 0 0 8px rgba(168, 85, 247, 0.6) inset"
-            : "0 0 12px rgba(168, 85, 247, 0.15)",
-        }}
-      >
+      <div className="flex items-center gap-2.5 rounded-full border border-purple-500/30 bg-noir-900/80 backdrop-blur-md pl-1.5 pr-4 py-1">
         <span
           aria-hidden="true"
-          className="relative inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 text-stone-50 font-display text-lg font-semibold"
-          style={{
-            animation: "sweprog-spin 3.2s linear infinite",
-            transformStyle: "preserve-3d",
-            boxShadow:
-              "0 0 0 1px rgba(168, 85, 247, 0.5), 0 4px 12px rgba(168, 85, 247, 0.35)",
-          }}
+          className="sweprog-s relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 text-stone-50 font-display text-base font-semibold"
         >
           S
         </span>
-        <span className="flex flex-col leading-tight">
-          <span className="text-[10px] tracking-[0.25em] uppercase text-stone-400">
+        <span className="flex flex-col leading-none">
+          <span className="text-[9px] tracking-[0.25em] uppercase text-stone-400">
             Built by
           </span>
           <span
-            className="text-sm tracking-[0.15em] font-medium text-stone-100 group-hover:text-purple-300 transition-colors"
+            className="text-[13px] tracking-[0.15em] font-medium text-stone-100 group-hover:text-purple-300 transition-colors mt-0.5"
             style={{ fontFamily: "var(--font-display)" }}
           >
             SWEPROG
@@ -78,9 +36,28 @@ export function SweprogBadge() {
       </div>
 
       <style jsx>{`
+        :global(.sweprog-s) {
+          animation:
+            sweprog-spin 3.2s linear infinite,
+            sweprog-pulse 1.8s ease-in-out infinite;
+        }
         @keyframes sweprog-spin {
           0%   { transform: rotateY(0deg); }
           100% { transform: rotateY(360deg); }
+        }
+        @keyframes sweprog-pulse {
+          0%, 100% {
+            box-shadow:
+              0 0 0 1px rgba(168, 85, 247, 0.5),
+              0 0 6px rgba(168, 85, 247, 0.3),
+              0 4px 10px rgba(168, 85, 247, 0.25);
+          }
+          50% {
+            box-shadow:
+              0 0 0 2px rgba(168, 85, 247, 0.9),
+              0 0 18px rgba(168, 85, 247, 0.85),
+              0 4px 22px rgba(168, 85, 247, 0.7);
+          }
         }
       `}</style>
     </a>
