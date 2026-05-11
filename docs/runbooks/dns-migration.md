@@ -83,9 +83,11 @@ the public domain points.
 ## Email keeps working — must not break
 
 - MX records are unchanged. Inbound mail to info@speedison.se keeps
-  flowing to wherever it goes today.
-- Outbound transactional mail (lead notifications) goes via Resend; that
-  uses the SPF + DKIM records added during Resend domain verification, NOT
-  the MX records.
-- Test inbox after cutover: send a test mail from another account to
-  info@speedison.se. Should arrive normally.
+  flowing to the Misshosting mailbox.
+- Outbound transactional mail (lead notifications) is sent BY the same
+  Misshosting mailbox via SMTP — `lib/mailer.ts` uses nodemailer with
+  the SMTP_HOST / SMTP_USER / SMTP_PASS env vars set in Railway. SPF and
+  DKIM are already published by Misshosting on this domain (see
+  `docs/runbooks/smtp-mail.md`).
+- Test inbox after cutover: submit a real lead → mail should arrive at
+  info@speedison.se within ~30 s.

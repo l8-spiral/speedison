@@ -9,8 +9,8 @@ All of these must pass.
 - [ ] CI green on `main` (web-tests + lighthouse jobs).
 - [ ] Manual QA pass complete on at least 3 devices
       (`docs/runbooks/manual-qa.md`).
-- [ ] Resend domain verified
-      (`docs/runbooks/resend-domain.md` → Status ✅ Verified).
+- [ ] SMTP credentials in hand for info@speedison.se
+      (`docs/runbooks/smtp-mail.md`).
 - [ ] WordPress backup taken from Misshosting (full files + DB).
 
 ## Railway project setup (one-time)
@@ -37,8 +37,11 @@ In the **Speedison Next.js service** → **Variables**:
 | Variable | How |
 |---|---|
 | `DATABASE_URL` | **Reference Variable** → MySQL plugin → `MYSQL_URL` |
-| `RESEND_API_KEY` | Manual paste (from Resend dashboard) |
-| `MAIL_FROM` | Manual: `Speedison <noreply@speedison.se>` |
+| `SMTP_HOST` | Manual: typically `mail.misshosting.se` |
+| `SMTP_PORT` | Manual: `587` (STARTTLS) or `465` (SSL) |
+| `SMTP_USER` | Manual: `info@speedison.se` |
+| `SMTP_PASS` | Manual: the info@speedison.se mailbox password |
+| `MAIL_FROM` | Manual: `"Speedison" <info@speedison.se>` |
 | `MAIL_TO` | Manual: `info@speedison.se` |
 | `IP_HASH_SALT` | Manual: run `openssl rand -hex 32` and paste |
 | `NEXT_PUBLIC_APP_URL` | Manual: `https://speedison.se` |
@@ -68,14 +71,16 @@ Run `docs/runbooks/dns-migration.md`. After DNS resolves to Railway:
 1. **Smoke test** at https://speedison.se in incognito.
    - Hero loads.
    - Submit a real test lead through the configurator.
-   - Verify email arrives at info@speedison.se via Resend.
+   - Verify email arrives at info@speedison.se (sent via Misshosting SMTP).
    - Verify the `leads` row appears in Railway MySQL (Railway dashboard →
      MySQL → Data tab).
 
 2. **Monitor for 24 h:**
-   - Railway service logs (Deployments → Logs) — no error spikes.
-   - Resend dashboard — deliverability rate stays > 95%.
+   - Railway service logs (Deployments → Logs) — no error spikes; in
+     particular look for `leads.mail` lines indicating SMTP failures.
    - `leads` table count — submissions arriving.
+   - Optional: check the info@speedison.se Sent folder via Misshosting
+     webmail to confirm outbound mail is flowing.
 
 ## Tag the release
 
