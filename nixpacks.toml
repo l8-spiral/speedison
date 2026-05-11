@@ -1,0 +1,23 @@
+# Tells Nixpacks (Railway's default builder) that this is a Node project
+# whose package.json lives in /web rather than at the repo root.
+#
+# Why: Nixpacks auto-detection only looks at the repo root. Without this
+# file it sees no package.json there and refuses to install Node. With
+# this file we explicitly install nodejs_20 + openssl (Prisma needs it)
+# and run the build steps inside /web.
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "openssl"]
+
+[phases.install]
+cmds = ["cd web && npm ci"]
+
+[phases.build]
+cmds = [
+  "cd web && npx prisma generate",
+  "cd web && npx prisma migrate deploy",
+  "cd web && npm run build",
+]
+
+[start]
+cmd = "cd web && npm run start"
