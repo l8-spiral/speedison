@@ -87,59 +87,56 @@ Filename:      chapter-stage-16x9.mp4
 **Prompt:**
 
 ```
-A 5-second cinematic camera arc for image-to-video generation.
+A single five-second cinematic shot for image-to-video generation. Do
+not generate multiple clips or variations — one output only.
 
-OPENING — the very first frame of the output must match the input image
-exactly: a matte black performance sports car lifted on a workshop hoist
-with exploded parts visible around it, positioned in the RIGHT THIRD of a
-16:9 widescreen frame. The LEFT TWO-THIRDS of the frame is pitch black,
-solid, empty, no objects, no haze visible. The car body does not occupy
-the center of the frame at any point in the shot.
+The very first frame of the output must match the input image exactly:
+a matte black 5-door station wagon (estate body style, kombi silhouette,
+long roofline, rear hatchback) lifted on a workshop hoist with exploded
+parts visible around it, positioned in the RIGHT THIRD of a 16:9
+widescreen frame. The LEFT TWO-THIRDS of the frame is solid pitch black,
+empty. The vehicle is a station wagon — not a coupe, not a sedan.
 
-THIS IS A STRICT COMPOSITION RULE FOR EVERY FRAME OF THE OUTPUT:
-  • The car body stays in the RIGHT THIRD of the frame throughout.
-  • The LEFT TWO-THIRDS of the frame is solid pitch black, empty space.
-  • The car is NEVER centered horizontally. Never.
-  • If the camera tightens on a part, that part appears in the RIGHT
+Across the five seconds, the camera performs one continuous flowing
+motion. It begins at the wide opening composition. Over the first two
+seconds the camera dollies slowly forward and tightens on the open
+engine bay area on the right side of the wagon, ending on a close view
+of the ECU module — a black rectangular electronic control unit with a
+visible heat-sink or circuit-board surface. The middle second of the
+shot holds steady on this ECU close-up: the circuit board surface emits
+a soft amber data glow. Over the final two seconds the camera retreats
+smoothly back along the same path, returning to the wide opening
+composition by the last frame. The final frame must compositionally
+match the opening frame: lifted wagon with exploded parts in the RIGHT
+THIRD, LEFT TWO-THIRDS pitch black — a clean wide neutral view, not a
+close-up, ready to chain into the next chapter.
+
+Strict composition rules that apply to every frame of the shot:
+  • The wagon body stays in the RIGHT THIRD of the frame throughout.
+  • The LEFT TWO-THIRDS of the frame is solid pitch black empty space.
+  • The wagon is NEVER centered horizontally. Never.
+  • When the camera tightens on the ECU, the ECU appears in the RIGHT
     HALF of the frame; the LEFT HALF remains pitch black.
+  • The very last frame is a wide neutral view matching the opening
+    frame, NOT a close-up, NOT centered.
+  • The wagon's body silhouette is preserved throughout — long
+    roofline, hatchback, station-wagon proportions. Do not morph the
+    silhouette toward a coupe or sedan.
 
-THREE-PHASE CAMERA ARC over five seconds:
-
-  Phase 1 — Push-in (0.0 to 2.0 seconds).
-    The camera dollies slowly forward and tightens on the open engine
-    bay area on the right side of the car. By the end of phase 1 the
-    frame is close on the ECU module — a black rectangular electronic
-    control unit with a visible heat-sink or circuit-board surface.
-    During this phase, the engine bay and ECU stay in the RIGHT HALF
-    of the frame. The LEFT HALF stays pitch black. Camera motion is
-    smooth and slow with no shake.
-
-  Phase 2 — Hold (2.0 to 3.0 seconds).
-    The camera holds steady on the ECU module close-up. The ECU's
-    circuit board surface emits a soft amber data glow. The ECU module
-    sits in the RIGHT HALF of the frame; the LEFT HALF stays pitch
-    black. Subject does not move; only the glow intensifies slightly.
-
-  Phase 3 — Pull-back (3.0 to 5.0 seconds).
-    The camera retreats smoothly back along the same path. By the very
-    last frame, the composition matches the opening frame: lifted car
-    with exploded parts in the RIGHT THIRD, LEFT TWO-THIRDS pitch black.
-    This final wide frame is the chain handoff for the next chapter and
-    must be a clean wide neutral view, not a close-up.
-
-LIGHTING — warm copper and amber rim lighting from above hits the car
+Lighting: warm copper and amber rim lighting from above hits the wagon
 body and ECU; deep shadows below. The LEFT TWO-THIRDS of the frame has
 no light source — it stays solid pitch black throughout.
 
-STYLE — premium automotive commercial cinematography, slow-motion 24fps
+Style: premium automotive commercial cinematography, slow-motion 24fps
 motion blur, hyper-realistic photographic quality.
 
-CONSTRAINTS — only the camera moves. The car and exploded parts stay
+Constraints: only the camera moves. The wagon and exploded parts stay
 completely still on the right side of the frame. Do not include people,
 hands, mechanics, tools, lifts visible in the frame, text, captions,
-watermarks, logos, hood ornaments, license plates, or any UI overlays.
-Do not move the car. Do not rotate the car. Do not change the car's
-position in the frame from right-third to centered.
+watermarks, logos, hood ornaments, license plates, or UI overlays. Do
+not move the wagon. Do not rotate the wagon. Do not change the wagon's
+position from right-third to centered. Do not generate multiple
+variations of the shot — one output only.
 ```
 
 ---
@@ -149,54 +146,70 @@ position in the frame from right-third to centered.
 ```
 Title:         chapter-pops-16x9
 Aspect:        16:9
-Start frame:   scener/_chain/after-stage-16x9.png  ← from previous clip
+Start frame:   scener/_chain/after-stage-16x9.png   ← chain handoff from stage
 Filename:      chapter-pops-16x9.mp4
 ```
+
+> **Generate ONE clip only.** Earlier prompts using numbered "Phase 1 /
+> Phase 2 / Phase 3" structure caused Luma to produce three separate
+> outputs. This prompt describes the camera motion as one flowing arc.
+>
+> **Car body type:** the subject is a **matte black 5-door station
+> wagon / estate / kombi** with a long roofline and rear hatchback. It is
+> NOT a coupe. It is NOT a sedan. Keep the wagon silhouette.
 
 **Prompt:**
 
 ```
-A 5-second cinematic camera arc for image-to-video generation. The
-opening frame matches the start image exactly: a wide low-angle 3/4
-view of a lifted matte black performance sports car with exploded parts
-in a dark workshop.
+A single five-second cinematic shot for image-to-video generation. Do
+not generate multiple clips or variations — one output only.
 
-ARC, broken into three phases:
+The very first frame of the output must match the input image: a matte
+black 5-door station wagon (estate body style, kombi silhouette, long
+roofline, rear hatchback) lifted on a workshop hoist with exploded
+parts visible around it, in a dark workshop, viewed in a wide low-angle
+3/4 perspective. The vehicle is a station wagon — not a coupe, not a
+sedan.
 
-  Phase 1 (0.0–2.0s) — Camera moves smoothly around to the rear-side of
-  the car and tightens on the twin chrome exhaust tips. The exhaust tips
-  settle into the LEFT THIRD of the 16:9 widescreen frame. Camera motion
-  is smooth and slow, no shake.
+Across the five seconds, the camera performs one continuous flowing arc.
+It begins at the wide opening composition. Over the first two seconds
+the camera glides smoothly around to a rear-side angle and tightens on
+the twin chrome exhaust tips at the back of the wagon, positioning those
+exhaust tips in the LEFT THIRD of the 16:9 widescreen frame. The middle
+second of the shot holds steady on this close-up: bright orange and
+yellow flames burst rhythmically from both exhaust pipes in two slow
+pulses, with fine sparks and glowing embers flying outward into pitch
+black background, and heat-haze distortion shimmering around the metal.
+Over the final two seconds the camera pulls back smoothly, retreating
+to a wide low-angle view of the lifted station wagon from a rear-side
+perspective. The final frame must be a clean wide neutral view of the
+full wagon on the lift — not a close-up, not centered tightly on any
+single part — so it can serve as the start frame of the next chapter.
 
-  Phase 2 (2.0–3.0s) — Hold the close-up on the twin exhaust tips. During
-  this phase, bright orange and yellow flames burst rhythmically from
-  both exhaust pipes in two slow pulses. Fine sparks and glowing embers
-  fly outward into pitch black background. Heat-haze distortion shimmers
-  around the metal exhaust tips.
+Strict composition rules that apply to every frame of the shot:
+  • At the close-up moment, the exhaust tips sit in the LEFT THIRD of
+    the frame; the RIGHT TWO-THIRDS remain pitch black with only a faint
+    warm glow drifting from the flames.
+  • The final frame and the opening frame compositionally rhyme: both
+    are wide neutral views of the lifted wagon, not tight close-ups.
+  • The wagon's body silhouette is preserved throughout — long
+    roofline, hatchback, station-wagon proportions. Do not morph the
+    silhouette toward a coupe or sedan.
 
-  Phase 3 (3.0–5.0s) — Camera pulls back smoothly, retreating to a wide
-  low-angle view of the lifted car from a rear-side perspective. The
-  final frame should compositionally match a wide neutral view of the
-  lifted car similar to the opening composition. This wide end-frame is
-  critical — it becomes the start frame of the next chapter.
+Lighting: warm copper rim lighting from above during the wide views;
+high-contrast chiaroscuro lighting during the close-up; polished
+titanium-blue heat tint patina on the metal exhaust tips.
 
-COMPOSITION: during phase 2 the exhaust tips occupy the LEFT THIRD of
-the frame; the RIGHT TWO-THIRDS remain pitch black with only a faint
-warm glow from the flames. At the wide rest points (start and end), the
-car body fills the lower portion of the frame in a wide neutral angle.
-
-LIGHTING: warm copper rim lighting from above during the wide views;
-high-contrast chiaroscuro lighting during the close-up; titanium-blue
-heat tint patina on the metal exhaust tips.
-
-STYLE: premium automotive cinematography, hyper-detailed, shallow depth
+Style: premium automotive cinematography, hyper-detailed, shallow depth
 of field, slow-motion 24fps motion blur, hyper-realistic photographic
 quality.
 
-CONSTRAINTS: the car body stays completely still throughout. Only the
-camera moves; only the flames are active during phase 2. Do not include
-people, hands, mechanics, tools, lifts visible in the frame, text,
-captions, watermarks, logos, license plates, or UI overlays.
+Constraints: the wagon body stays completely still throughout; only the
+camera moves; only the flames are active during the middle close-up
+moment. Do not include people, hands, mechanics, tools, lifts visible
+in the frame, text, captions, watermarks, logos, license plates, or UI
+overlays. Do not generate multiple variations of the shot — one output
+only.
 ```
 
 ---
@@ -206,55 +219,66 @@ captions, watermarks, logos, license plates, or UI overlays.
 ```
 Title:         chapter-emissions-16x9
 Aspect:        16:9
-Start frame:   scener/_chain/after-pops-16x9.png  ← from previous clip
+Start frame:   scener/_chain/after-pops-16x9.png   ← chain handoff from pops
 Filename:      chapter-emissions-16x9.mp4
 ```
+
+> **Generate ONE clip only.** Single output, no variations.
+>
+> **Car body type:** matte black 5-door station wagon (estate, kombi
+> silhouette, long roofline, rear hatchback). Not a coupe, not a sedan.
 
 **Prompt:**
 
 ```
-A 5-second cinematic camera arc for image-to-video generation. The
-opening frame matches the start image exactly: a wide low-angle view of
-a lifted matte black performance sports car with exploded parts in a
-dark workshop.
+A single five-second cinematic shot for image-to-video generation. Do
+not generate multiple clips or variations — one output only.
 
-ARC, broken into three phases:
+The very first frame of the output must match the input image: a matte
+black 5-door station wagon (estate body style, kombi silhouette, long
+roofline, rear hatchback) lifted on a workshop hoist with exploded
+parts visible around it, in a dark workshop, viewed in a wide low-angle
+perspective. The vehicle is a station wagon — not a coupe, not a sedan.
 
-  Phase 1 (0.0–2.0s) — Camera tilts downward and dollies in under the
-  lifted car, settling on a low 3/4 angle looking up at the underbody.
-  The catalytic converter — a polished cylindrical metal canister
-  mounted in the exhaust line — moves into the RIGHT THIRD of the
-  16:9 widescreen frame. Other emissions hardware (EGR valve, DPF
-  housing, exhaust piping) is visible around it. Camera motion is smooth
-  and slow, no shake.
+Across the five seconds, the camera performs one continuous flowing arc.
+It begins at the wide opening composition. Over the first two seconds
+the camera tilts downward and dollies in under the lifted wagon, settling
+on a low 3/4 angle looking up at the underbody and tightening on the
+catalytic converter — a polished cylindrical metal canister mounted in
+the exhaust line — positioning that catalytic converter in the RIGHT
+THIRD of the 16:9 widescreen frame. Other emissions hardware (EGR valve,
+DPF housing, exhaust piping) is visible around it. The middle second of
+the shot holds steady on this close-up: the catalytic converter housing
+emits a subtle warm amber glow. Over the final two seconds the camera
+pulls back smoothly, retreating from under the wagon back to a wide
+low-angle view of the lifted wagon. The final frame must be a clean
+wide neutral view of the full wagon on the lift — not a close-up, not
+centered tightly on any single part — so it can serve as the start
+frame of the next chapter.
 
-  Phase 2 (2.0–3.0s) — Hold the close-up on the catalytic converter
-  housing. During this phase the housing emits a subtle warm amber glow.
-  Subject does not move; camera holds still or near-still.
+Strict composition rules that apply to every frame of the shot:
+  • At the close-up moment, the catalytic converter sits in the RIGHT
+    THIRD of the frame; the LEFT TWO-THIRDS remain pitch black with
+    subtle haze.
+  • The final frame and the opening frame compositionally rhyme: both
+    are wide neutral views of the lifted wagon, not tight close-ups.
+  • The wagon's body silhouette is preserved throughout — long
+    roofline, hatchback, station-wagon proportions. Do not morph the
+    silhouette toward a coupe or sedan.
 
-  Phase 3 (3.0–5.0s) — Camera pulls back smoothly, retreating from under
-  the car back to a wide low-angle view of the lifted car. The final
-  frame should compositionally match a wide neutral view of the lifted
-  car similar to the opening composition. This wide end-frame is
-  critical — it becomes the start frame of the next chapter.
+Lighting: warm amber rim lighting from below highlights the underbody
+metal components during the close-up; warm copper rim lighting from
+above during the wide views; deep shadows throughout.
 
-COMPOSITION: during phase 2 the catalytic converter occupies the RIGHT
-THIRD of the frame; the LEFT TWO-THIRDS remain pitch black with subtle
-haze. At the wide rest points (start and end), the car body sits in a
-wide neutral angle.
-
-LIGHTING: warm amber rim lighting from below highlights the underbody
-metal components during phase 2; warm copper rim lighting from above
-during the wide views; deep shadows throughout.
-
-STYLE: industrial workshop precision aesthetic, premium automotive
+Style: industrial workshop precision aesthetic, premium automotive
 engineering cinematography, shallow depth of field, slow-motion 24fps
 motion blur, hyper-realistic photographic quality.
 
-CONSTRAINTS: the car body stays completely still throughout. Only the
+Constraints: the wagon body stays completely still throughout. Only the
 camera moves. Do not include people, hands, mechanics, tools, lifts
 visible in the frame, text, captions, watermarks, logos, license plates,
-or UI overlays.
+or UI overlays. Do not generate multiple variations of the shot — one
+output only.
 ```
 
 ---
@@ -264,56 +288,66 @@ or UI overlays.
 ```
 Title:         chapter-exhaust-16x9
 Aspect:        16:9
-Start frame:   scener/_chain/after-emissions-16x9.png  ← from previous clip
+Start frame:   scener/_chain/after-emissions-16x9.png   ← chain handoff from emissions
 Filename:      chapter-exhaust-16x9.mp4
 ```
+
+> **Generate ONE clip only.** Single output, no variations.
+>
+> **Car body type:** matte black 5-door station wagon (estate, kombi
+> silhouette, long roofline, rear hatchback). Not a coupe, not a sedan.
 
 **Prompt:**
 
 ```
-A 5-second cinematic camera arc for image-to-video generation. The
-opening frame matches the start image exactly: a wide low-angle view of
-a lifted matte black performance sports car with exploded parts in a
-dark workshop.
+A single five-second cinematic shot for image-to-video generation. Do
+not generate multiple clips or variations — one output only.
 
-ARC, broken into three phases:
+The very first frame of the output must match the input image: a matte
+black 5-door station wagon (estate body style, kombi silhouette, long
+roofline, rear hatchback) lifted on a workshop hoist with exploded
+parts visible around it, in a dark workshop, viewed in a wide low-angle
+perspective. The vehicle is a station wagon — not a coupe, not a sedan.
 
-  Phase 1 (0.0–2.0s) — Camera repositions to a low side angle and begins
-  a slow lateral tracking shot along the underside exhaust line. The
-  full exhaust system comes into view — twin chrome exhaust tips at the
-  rear, polished mid-pipe and catback piping running forward toward the
-  manifold. The car body and exhaust line occupy the LEFT THIRD of the
-  16:9 widescreen frame, running horizontally across the upper portion
-  of that left third. Camera tracks horizontally from right to left.
+Across the five seconds, the camera performs one continuous flowing
+motion. It begins at the wide opening composition. Over the first two
+seconds the camera repositions to a low side angle and begins a slow
+lateral tracking shot along the underside exhaust line — twin chrome
+exhaust tips at the rear, polished mid-pipe and catback piping running
+forward toward the manifold. The wagon body and exhaust line occupy the
+LEFT THIRD of the 16:9 widescreen frame, running horizontally across the
+upper portion of that left third; the camera tracks horizontally from
+right to left along this exhaust line. The middle second holds the
+lateral track at its slowest speed mid-way along the exhaust line, where
+the polished titanium-blue heat tint patina on the metal pipes is most
+visible. Over the final two seconds the camera pulls back smoothly and
+slightly elevates, retreating to a wide low-angle side view of the
+lifted wagon. This is the final chapter so there is no next chapter to
+hand off to, but the end-frame should still be a clean wide neutral
+side view of the full wagon, a calm resting state.
 
-  Phase 2 (2.0–3.0s) — Hold the lateral track mid-way along the exhaust
-  line at slowest speed. Polished titanium-blue heat tint on the metal
-  pipes is most visible during this phase. Subject does not move; camera
-  continues its slow lateral movement.
+Strict composition rules that apply to every frame of the shot:
+  • At the lateral tracking moment, the exhaust line stays in the LEFT
+    THIRD of the frame running horizontally; the RIGHT TWO-THIRDS remain
+    pitch black with subtle haze.
+  • The final frame is a wide neutral side view of the lifted wagon, not
+    a close-up, not centered tightly on any single part.
+  • The wagon's body silhouette is preserved throughout — long
+    roofline, hatchback, station-wagon proportions. Do not morph the
+    silhouette toward a coupe or sedan.
 
-  Phase 3 (3.0–5.0s) — Camera pulls back smoothly and slightly elevates,
-  retreating to a wide low-angle side view of the lifted car. The final
-  frame should compositionally match a wide neutral side view of the
-  lifted car. This is the final chapter so there is no next chapter to
-  hand off to, but the end-frame should still feel like a clean resting
-  state for the section.
+Lighting: polished titanium-blue heat tint on the metal pipes during
+the close lateral track; warm copper rim lighting from above throughout;
+deep shadows below.
 
-COMPOSITION: throughout the lateral tracking phases (1 and 2), the
-exhaust line stays in the LEFT THIRD running horizontally; the RIGHT
-TWO-THIRDS remain pitch black with subtle haze. At the end (phase 3),
-the full lifted car is visible in a wide neutral side angle.
-
-LIGHTING: polished titanium-blue heat tint on the metal pipes during
-the close phases; warm copper rim lighting from above throughout; deep
-shadows below.
-
-STYLE: premium automotive engineering close-up, shallow depth of field,
+Style: premium automotive engineering close-up, shallow depth of field,
 slow-motion 24fps motion blur, hyper-realistic photographic quality.
 
-CONSTRAINTS: the car body stays completely still throughout. Only the
+Constraints: the wagon body stays completely still throughout. Only the
 camera tracks laterally and then pulls back. Do not include people,
 hands, mechanics, tools, lifts visible in the frame, text, captions,
-watermarks, logos, license plates, or UI overlays.
+watermarks, logos, license plates, or UI overlays. Do not generate
+multiple variations of the shot — one output only.
 ```
 
 ---
