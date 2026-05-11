@@ -1,8 +1,8 @@
 export const HERO = {
-  taglineLine1: "Vi tämjer",
-  taglineLine2: "maskinen.",
-  subHeadline: "Stage-optimering, Pops & Bangs och avgassystem för högpresterande bilar.",
-  ctaPrimary: "Konfigurera din bil",
+  taglineLine1: "BUILT FOR POWER.",
+  taglineLine2: "TUNED FOR PRECISION.",
+  subHeadline: "Performance tuning and upgrades engineered for serious drivers.",
+  ctaPrimary: "Boka tid",
   ctaSecondary: "Ring oss",
   actII: {
     label: "Vad vi gör",

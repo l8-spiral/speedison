@@ -36,13 +36,13 @@ function ActI({ innerP }: { innerP: number }) {
       initial={{ x: -40 }} animate={{ x: 0 }}
       transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
     >
-      <h1 className="text-5xl md:text-7xl text-copper-100 font-light leading-none">
+      <h1 className="text-4xl md:text-6xl lg:text-7xl text-copper-100 font-light leading-[1.05] tracking-[0.02em]">
         {HERO.taglineLine1}
       </h1>
-      <h1 className="text-5xl md:text-7xl text-copper-300 font-light leading-none italic mt-2">
+      <h1 className="text-4xl md:text-6xl lg:text-7xl text-copper-300 font-light leading-[1.05] tracking-[0.02em] italic mt-2">
         {HERO.taglineLine2}
       </h1>
-      <p className="mt-6 max-w-md text-stone-400 text-base md:text-lg">
+      <p className="mt-8 max-w-lg text-stone-400 text-base md:text-lg leading-relaxed">
         {HERO.subHeadline}
       </p>
     </motion.div>
@@ -76,16 +76,9 @@ function ActII({ innerP }: { innerP: number }) {
   );
 }
 
-function ActIII({ innerP }: { innerP: number }) {
-  const showHotspots = innerP > 0.6;
-  return (
-    <motion.div
-      className="absolute inset-0 flex items-end justify-center pb-16"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-    >
-      <span className="text-xs tracking-[0.3em] uppercase text-copper-300">
-        {showHotspots ? "Hovra över delarna" : "Anatomin avslöjas"}
-      </span>
-    </motion.div>
-  );
+// Act III intentionally renders nothing — the hotspots layer handles
+// interaction in the final scrub stage; the previous "Hovra över delarna"
+// hint was removed per design.
+function ActIII(_props: { innerP: number }) {
+  return null;
 }

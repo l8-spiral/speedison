@@ -34,8 +34,11 @@ export function actForProgress(p: number): Act {
   return "III";
 }
 
+// ffmpeg writes 1-indexed filenames (frame-001.webp ... frame-N.webp),
+// but our progress math is 0-indexed. Add 1 here so callers can pass the
+// natural 0-based index and still hit the right file.
 export function framePath(width: 1920 | 1280 | 720, frameIndex: number): string {
-  const idx = String(frameIndex).padStart(3, "0");
+  const idx = String(frameIndex + 1).padStart(3, "0");
   return `/frames/${width}w/frame-${idx}.webp`;
 }
 
@@ -66,25 +69,26 @@ type ChapterSequenceMap = Partial<Record<`${ChapterSlug}-${ChapterAspect}`, Fram
 // Update the totalFrames count whenever a chapter video is (re)extracted.
 // Missing entries mean "no scrub yet — fall back to <ChapterScene>".
 export const CHAPTER_SEQUENCES: ChapterSequenceMap = {
+  // frameIndex + 1 because ffmpeg writes 1-indexed filenames. See framePath above.
   "stage-16x9": {
     totalFrames: 151,
     pathFor: (width, frameIndex) =>
-      `/frames/stage-16x9/${width}w/frame-${String(frameIndex).padStart(3, "0")}.webp`,
+      `/frames/stage-16x9/${width}w/frame-${String(frameIndex + 1).padStart(3, "0")}.webp`,
   },
   "pops-16x9": {
     totalFrames: 151,
     pathFor: (width, frameIndex) =>
-      `/frames/pops-16x9/${width}w/frame-${String(frameIndex).padStart(3, "0")}.webp`,
+      `/frames/pops-16x9/${width}w/frame-${String(frameIndex + 1).padStart(3, "0")}.webp`,
   },
   "emissions-16x9": {
     totalFrames: 151,
     pathFor: (width, frameIndex) =>
-      `/frames/emissions-16x9/${width}w/frame-${String(frameIndex).padStart(3, "0")}.webp`,
+      `/frames/emissions-16x9/${width}w/frame-${String(frameIndex + 1).padStart(3, "0")}.webp`,
   },
   "exhaust-16x9": {
     totalFrames: 151,
     pathFor: (width, frameIndex) =>
-      `/frames/exhaust-16x9/${width}w/frame-${String(frameIndex).padStart(3, "0")}.webp`,
+      `/frames/exhaust-16x9/${width}w/frame-${String(frameIndex + 1).padStart(3, "0")}.webp`,
   },
   // future entries land here as videos arrive:
   //   "stage-9x16":     { totalFrames, pathFor: ... },
