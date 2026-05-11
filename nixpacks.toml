@@ -15,9 +15,15 @@ cmds = ["cd web && npm ci"]
 [phases.build]
 cmds = [
   "cd web && npx prisma generate",
-  "cd web && npx prisma migrate deploy",
   "cd web && npm run build",
 ]
 
+# Migrations run at startup, NOT during build — the Railway internal DNS
+# (mysql.railway.internal) only resolves at runtime, so build-time
+# attempts to reach the database fail with P1001. Running migrate deploy
+# here means the migration history is checked against the live DB on
+# every cold-start. It's idempotent: applied migrations are no-ops.
+# Fail-fast — if migrate fails, start never runs and Railway marks the
+# deploy unhealthy rather than silently shipping a schema-drift bug.
 [start]
-cmd = "cd web && npm run start"
+cmd = "cd web && npx prisma migrate deploy && npm run start"
