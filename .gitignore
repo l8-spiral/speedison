@@ -34,13 +34,11 @@ Thumbs.db
 # scener (large source videos)
 scener/
 
-# extracted frames (regenerated from source video)
-web/public/frames/*/frame-*.webp
+# Frame WebPs are committed (Option A in deploy plan): Railway build
+# can't regenerate them — scener/*.mp4 is gitignored (too large) and
+# Nixpacks doesn't have ffmpeg. ~131 MB but only updated when source
+# videos change. Plan: move to object storage (R2/S3) later.
 
 # logs
 *.log
 .lighthouseci/
-
-# extracted chapter frames (regenerated from scener/chapter-*.mp4)
-web/public/frames/*-16x9/*/frame-*.webp
-web/public/frames/*-9x16/*/frame-*.webp
