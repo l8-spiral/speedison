@@ -8,9 +8,14 @@
 #
 # nodejs_22 (not 20) because Nixpacks' default nixpkgs snapshot ships
 # nodejs_20 = 20.6.1, but Next.js 16 needs >=20.9.0 and Vite 8 needs
-# >=20.19.0 || >=22.12.0. nodejs_22 from the same snapshot satisfies both.
+# >=20.19.0 || >=22.12.0.
+#
+# We pin nixpkgsArchive to a recent nixos-25.05 revision because
+# Nixpacks' built-in nixpkgs snapshot is too old to have nodejs_22
+# at all (error: undefined variable 'nodejs_22').
 
 [phases.setup]
+nixpkgsArchive = "ac62194c3917d5f474c1a844b6fd6da2db95077d"
 nixPkgs = ["nodejs_22", "openssl"]
 
 [phases.install]
