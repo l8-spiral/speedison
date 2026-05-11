@@ -3,11 +3,15 @@
 #
 # Why: Nixpacks auto-detection only looks at the repo root. Without this
 # file it sees no package.json there and refuses to install Node. With
-# this file we explicitly install nodejs_20 + openssl (Prisma needs it)
+# this file we explicitly install nodejs_22 + openssl (Prisma needs it)
 # and run the build steps inside /web.
+#
+# nodejs_22 (not 20) because Nixpacks' default nixpkgs snapshot ships
+# nodejs_20 = 20.6.1, but Next.js 16 needs >=20.9.0 and Vite 8 needs
+# >=20.19.0 || >=22.12.0. nodejs_22 from the same snapshot satisfies both.
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "openssl"]
+nixPkgs = ["nodejs_22", "openssl"]
 
 [phases.install]
 cmds = ["cd web && npm ci"]
