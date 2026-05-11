@@ -47,9 +47,11 @@ const dur = durMatch
   ? Number(durMatch[1]) * 3600 + Number(durMatch[2]) * 60 + Number(durMatch[3])
   : 5;
 
-// Step back 0.05s from the very end — empirically the most reliable way to
-// land on a real frame in WebM-encoded MP4s coming out of Luma.
-const t = Math.max(0, dur - 0.05);
+// Step back ~0.1s (≈ 3 frames at 30fps) from the very end. The absolute
+// last frame is often blurry due to encoding artefacts in Luma's output;
+// a frame slightly before the end is sharper and visually identical for
+// chain-handoff purposes.
+const t = Math.max(0, dur - 0.1);
 
 const r = spawnSync(
   ffmpegInstaller.path,
