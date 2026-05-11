@@ -37,8 +37,8 @@ In the **Speedison Next.js service** → **Variables**:
 | Variable | How |
 |---|---|
 | `DATABASE_URL` | **Reference Variable** → MySQL plugin → `MYSQL_URL` |
-| `SMTP_HOST` | Manual: typically `mail.misshosting.se` |
-| `SMTP_PORT` | Manual: `587` (STARTTLS) or `465` (SSL) |
+| `SMTP_HOST` | Manual: `mail.speedison.se` |
+| `SMTP_PORT` | Manual: `465` (SSL/TLS, recommended) |
 | `SMTP_USER` | Manual: `info@speedison.se` |
 | `SMTP_PASS` | Manual: the info@speedison.se mailbox password |
 | `MAIL_FROM` | Manual: `"Speedison" <info@speedison.se>` |

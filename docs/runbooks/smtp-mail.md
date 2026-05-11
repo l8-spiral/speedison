@@ -9,20 +9,24 @@ Misshosting. No third-party transactional provider is used.
 Get these values from Misshosting (cPanel → Email Accounts → set up mail
 client / "Connect devices") for the `info@speedison.se` mailbox:
 
-| Value | Typical | Where to find it |
+| Value | Speedison | Where to find it |
 |---|---|---|
-| Outgoing host | `mail.misshosting.se` (or your specific server) | Misshosting mail-client setup page |
-| Outgoing port | `587` STARTTLS (recommended) or `465` SSL | Same page |
+| Outgoing host | `mail.speedison.se` | Misshosting cPanel → Email Accounts → "Connect Devices" |
+| Outgoing port | `465` (SSL/TLS, recommended) | Same page |
 | Username | `info@speedison.se` | The mailbox address itself |
 | Password | (the mailbox password) | The one you set when creating the mailbox |
+
+> Use the SSL/TLS settings (port 465), not the non-SSL settings (port 587 in
+> Misshosting's setup). Our mailer auto-enables `secure: true` when
+> `SMTP_PORT === "465"`.
 
 ## Set the env vars
 
 In Railway → service → Variables (or `web/.env` for local dev):
 
 ```
-SMTP_HOST=mail.misshosting.se
-SMTP_PORT=587
+SMTP_HOST=mail.speedison.se
+SMTP_PORT=465
 SMTP_USER=info@speedison.se
 SMTP_PASS=<the mailbox password>
 MAIL_FROM="Speedison" <info@speedison.se>
