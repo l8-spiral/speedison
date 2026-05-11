@@ -40,3 +40,7 @@ web/public/frames/*/frame-*.webp
 # logs
 *.log
 .lighthouseci/
+
+# extracted chapter frames (regenerated from scener/chapter-*.mp4)
+web/public/frames/*-16x9/*/frame-*.webp
+web/public/frames/*-9x16/*/frame-*.webp

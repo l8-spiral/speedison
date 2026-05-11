@@ -1,62 +1,85 @@
 "use client";
 import { useEffect, useMemo, useRef } from "react";
-import { TOTAL_FRAMES, frameForProgress, framePath } from "@/lib/frames";
+import {
+  HERO_SEQUENCE,
+  frameForProgress,
+  type FrameSequenceConfig,
+  type FrameWidth,
+} from "@/lib/frames";
 
 type Props = {
-  progress: number;            // 0..1, scroll-driven
-  width: 1920 | 1280 | 720;
+  progress: number; // 0..1, scroll-driven
+  width: FrameWidth;
+  /** Defaults to HERO_SEQUENCE for backwards compat with the existing hero. */
+  config?: FrameSequenceConfig;
   className?: string;
 };
 
 const EAGER_COUNT = 30;
 
-export function FrameSequence({ progress, width, className }: Props) {
+export function FrameSequence({ progress, width, config = HERO_SEQUENCE, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<Map<number, HTMLImageElement>>(new Map());
   const lastDrawnRef = useRef<number>(-1);
+  const { totalFrames, pathFor } = config;
+
+  // Wipe the cache and last-drawn marker whenever the config changes — otherwise
+  // a chapter mounting after the hero would reuse hero frames.
+  useEffect(() => {
+    imagesRef.current = new Map();
+    lastDrawnRef.current = -1;
+  }, [config, width]);
 
   // Lazy-load all frames in the background after mount
   useEffect(() => {
     let cancelled = false;
-    const queue = Array.from({ length: TOTAL_FRAMES }, (_, i) => i);
+    const queue = Array.from({ length: totalFrames }, (_, i) => i);
     let inflight = 0;
     const MAX_PARALLEL = 6;
 
-    const loadOne = (idx: number) => new Promise<void>((resolve) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.onload = () => { imagesRef.current.set(idx, img); resolve(); };
-      img.onerror = () => resolve();
-      img.src = framePath(width, idx);
-    });
+    const loadOne = (idx: number) =>
+      new Promise<void>((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => {
+          imagesRef.current.set(idx, img);
+          resolve();
+        };
+        img.onerror = () => resolve();
+        img.src = pathFor(width, idx);
+      });
 
     async function pump() {
       while (queue.length && !cancelled) {
         if (inflight >= MAX_PARALLEL) {
-          await new Promise(r => setTimeout(r, 16));
+          await new Promise((r) => setTimeout(r, 16));
           continue;
         }
         const idx = queue.shift()!;
         inflight++;
-        loadOne(idx).then(() => { inflight--; });
+        loadOne(idx).then(() => {
+          inflight--;
+        });
       }
     }
     pump();
-    return () => { cancelled = true; };
-  }, [width]);
+    return () => {
+      cancelled = true;
+    };
+  }, [width, totalFrames, pathFor]);
 
   // Render current frame on progress change
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const idx = frameForProgress(progress);
+    const idx = frameForProgress(progress, totalFrames);
     if (idx === lastDrawnRef.current) return;
 
     let target = idx;
     let img = imagesRef.current.get(target);
     if (!img) {
       // Find nearest available
-      for (let d = 1; d < TOTAL_FRAMES && !img; d++) {
+      for (let d = 1; d < totalFrames && !img; d++) {
         const before = imagesRef.current.get(target - d);
         const after = imagesRef.current.get(target + d);
         img = before || after;
@@ -71,11 +94,11 @@ export function FrameSequence({ progress, width, className }: Props) {
     if (canvas.height !== img.naturalHeight) canvas.height = img.naturalHeight;
     ctx.drawImage(img, 0, 0);
     lastDrawnRef.current = target;
-  }, [progress]);
+  }, [progress, totalFrames]);
 
   const eagerLinks = useMemo(
-    () => Array.from({ length: EAGER_COUNT }, (_, i) => framePath(width, i)),
-    [width]
+    () => Array.from({ length: Math.min(EAGER_COUNT, totalFrames) }, (_, i) => pathFor(width, i)),
+    [width, totalFrames, pathFor]
   );
 
   return (
