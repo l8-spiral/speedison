@@ -227,58 +227,84 @@ Filename:      chapter-emissions-16x9.mp4
 >
 > **Car body type:** matte black 5-door station wagon (estate, kombi
 > silhouette, long roofline, rear hatchback). Not a coupe, not a sedan.
+>
+> **Holistic shot, not detail-only.** Earlier prompts over-emphasised the
+> close-up moment and Luma reacted by skipping the wide opening entirely
+> and cutting straight to the close-up. This prompt spends as much
+> description on the OPENING WIDE FRAME and the CLOSING WIDE FRAME as on
+> the close-up, so Luma keeps the full arc instead of jumping to the
+> middle.
 
 **Prompt:**
 
 ```
-A single five-second cinematic shot for image-to-video generation. Do
-not generate multiple clips or variations — one output only.
+A single five-second cinematic continuous shot for image-to-video
+generation. Do not generate multiple clips or variations — one output
+only. The shot is one unbroken camera move — no cuts, no jump-cuts, no
+transitions, the same camera throughout.
 
-The very first frame of the output must match the input image: a matte
-black 5-door station wagon (estate body style, kombi silhouette, long
-roofline, rear hatchback) lifted on a workshop hoist with exploded
-parts visible around it, in a dark workshop, viewed in a wide low-angle
-perspective. The vehicle is a station wagon — not a coupe, not a sedan.
+OPENING FRAME (this is what the output starts on, and it must look
+exactly like the input image):
+A wide low-angle view of a matte black 5-door station wagon (estate
+body style, kombi silhouette, long roofline, rear hatchback) lifted
+high on a workshop hoist with its wheels removed and brake assemblies
+and exhaust components splayed out beneath it in a dark workshop. The
+camera is approximately three to four meters away from the wagon at a
+low side angle, looking slightly upward toward the lifted underbody.
+The wagon is clearly recognisable as a station wagon — long roof, four
+side windows, rear hatch — not a coupe, not a sedan. The wagon
+silhouette occupies the upper-right portion of the 16:9 widescreen
+frame; the left portion of the frame is pitch black workshop space.
+This wide composition is established and held for the very first
+fraction of a second so the viewer can see the whole wagon before any
+camera motion begins.
 
-Across the five seconds, the camera performs one continuous flowing arc.
-It begins at the wide opening composition. Over the first two seconds
-the camera tilts downward and dollies in under the lifted wagon, settling
-on a low 3/4 angle looking up at the underbody and tightening on the
-catalytic converter — a polished cylindrical metal canister mounted in
-the exhaust line — positioning that catalytic converter in the RIGHT
-THIRD of the 16:9 widescreen frame. Other emissions hardware (EGR valve,
-DPF housing, exhaust piping) is visible around it. The middle second of
-the shot holds steady on this close-up: the catalytic converter housing
-emits a subtle warm amber glow. Over the final two seconds the camera
-pulls back smoothly, retreating from under the wagon back to a wide
-low-angle view of the lifted wagon. The final frame must be a clean
-wide neutral view of the full wagon on the lift — not a close-up, not
-centered tightly on any single part — so it can serve as the start
-frame of the next chapter.
+CAMERA ARC (continuous, no cuts):
+From this opening wide view, the camera glides smoothly forward and
+downward in one continuous motion, advancing under the lifted wagon
+and tilting upward to look up at the underbody. As the camera arrives,
+it tightens on the catalytic converter — a polished cylindrical metal
+canister mounted in the exhaust line — and positions it in the RIGHT
+THIRD of the frame. Other emissions hardware (EGR valve, DPF housing,
+exhaust piping) is visible around it. Roughly mid-shot, the camera
+holds briefly on the catalytic converter while its housing emits a
+subtle warm amber glow. Then the camera reverses its motion, pulling
+back smoothly along the same path it came in on, retreating from under
+the wagon and lifting back to the wide low-angle side view.
 
-Strict composition rules that apply to every frame of the shot:
+CLOSING FRAME (the very last frame of the output, equally important as
+the opening frame):
+A wide low-angle view of the lifted matte black 5-door station wagon,
+compositionally rhyming with the opening frame: full wagon visible on
+the lift, exploded parts around it, dark workshop background. This is
+a clean wide neutral view — not a close-up, not tight on any single
+part. It is the handoff for the next chapter.
+
+Composition rules that apply to every frame:
+  • The wagon body silhouette is preserved throughout — long roofline,
+    hatchback, station-wagon proportions. Do not morph the silhouette
+    toward a coupe or sedan.
   • At the close-up moment, the catalytic converter sits in the RIGHT
     THIRD of the frame; the LEFT TWO-THIRDS remain pitch black with
     subtle haze.
-  • The final frame and the opening frame compositionally rhyme: both
-    are wide neutral views of the lifted wagon, not tight close-ups.
-  • The wagon's body silhouette is preserved throughout — long
-    roofline, hatchback, station-wagon proportions. Do not morph the
-    silhouette toward a coupe or sedan.
+  • The opening frame and the closing frame are both wide views of the
+    full wagon, not close-ups. Do not cut directly to the close-up at
+    the start; do not end on a close-up.
 
-Lighting: warm amber rim lighting from below highlights the underbody
-metal components during the close-up; warm copper rim lighting from
-above during the wide views; deep shadows throughout.
+Lighting: warm copper rim lighting from above during the wide views;
+warm amber rim lighting from below highlights the underbody metal
+components during the close-up phase; deep shadows throughout.
 
 Style: industrial workshop precision aesthetic, premium automotive
 engineering cinematography, shallow depth of field, slow-motion 24fps
 motion blur, hyper-realistic photographic quality.
 
 Constraints: the wagon body stays completely still throughout. Only the
-camera moves. Do not include people, hands, mechanics, tools, lifts
-visible in the frame, text, captions, watermarks, logos, license plates,
-or UI overlays. Do not generate multiple variations of the shot — one
-output only.
+camera moves. The motion is a single continuous arc with no cuts. Do
+not include people, hands, mechanics, tools, lifts visible in the
+frame, text, captions, watermarks, logos, license plates, or UI
+overlays. Do not generate multiple variations of the shot — one output
+only.
 ```
 
 ---
