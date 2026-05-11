@@ -76,10 +76,14 @@ export const CHAPTER_SEQUENCES: ChapterSequenceMap = {
     pathFor: (width, frameIndex) =>
       `/frames/pops-16x9/${width}w/frame-${String(frameIndex).padStart(3, "0")}.webp`,
   },
+  "emissions-16x9": {
+    totalFrames: 151,
+    pathFor: (width, frameIndex) =>
+      `/frames/emissions-16x9/${width}w/frame-${String(frameIndex).padStart(3, "0")}.webp`,
+  },
   // future entries land here as videos arrive:
   //   "stage-9x16":     { totalFrames, pathFor: ... },
   //   "pops-9x16":      { totalFrames, pathFor: ... },
-  //   "emissions-16x9": { totalFrames, pathFor: ... },
   //   "emissions-9x16": { totalFrames, pathFor: ... },
   //   "exhaust-16x9":   { totalFrames, pathFor: ... },
   //   "exhaust-9x16":   { totalFrames, pathFor: ... },

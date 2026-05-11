@@ -322,58 +322,84 @@ Filename:      chapter-exhaust-16x9.mp4
 >
 > **Car body type:** matte black 5-door station wagon (estate, kombi
 > silhouette, long roofline, rear hatchback). Not a coupe, not a sedan.
+>
+> **Holistic shot — three landmarks of equal weight.** Same template that
+> worked on the emissions prompt: a full paragraph each for OPENING FRAME,
+> CAMERA ARC, and CLOSING FRAME, so Luma doesn't skip the opening and cut
+> straight to the close-up.
 
 **Prompt:**
 
 ```
-A single five-second cinematic shot for image-to-video generation. Do
-not generate multiple clips or variations — one output only.
+A single five-second cinematic continuous shot for image-to-video
+generation. Do not generate multiple clips or variations — one output
+only. The shot is one unbroken camera move — no cuts, no jump-cuts, no
+transitions, the same camera throughout.
 
-The very first frame of the output must match the input image: a matte
-black 5-door station wagon (estate body style, kombi silhouette, long
-roofline, rear hatchback) lifted on a workshop hoist with exploded
-parts visible around it, in a dark workshop, viewed in a wide low-angle
-perspective. The vehicle is a station wagon — not a coupe, not a sedan.
+OPENING FRAME (this is what the output starts on, and it must look
+exactly like the input image):
+A wide low-angle side view of a matte black 5-door station wagon
+(estate body style, kombi silhouette, long roofline, rear hatchback)
+lifted high on a workshop hoist with its wheels removed and brake
+assemblies and exhaust components splayed out beneath it in a dark
+workshop. The camera is approximately three meters away from the
+wagon at a low side angle, looking horizontally across the side of
+the lifted vehicle. The wagon is clearly recognisable as a station
+wagon — long roof, four side windows, rear hatch — not a coupe, not a
+sedan. The full wagon silhouette is visible across the frame, with
+pitch black workshop space surrounding it. This wide composition is
+established and held for the very first fraction of a second so the
+viewer can see the whole wagon before any camera motion begins.
 
-Across the five seconds, the camera performs one continuous flowing
-motion. It begins at the wide opening composition. Over the first two
-seconds the camera repositions to a low side angle and begins a slow
-lateral tracking shot along the underside exhaust line — twin chrome
-exhaust tips at the rear, polished mid-pipe and catback piping running
-forward toward the manifold. The wagon body and exhaust line occupy the
-LEFT THIRD of the 16:9 widescreen frame, running horizontally across the
-upper portion of that left third; the camera tracks horizontally from
-right to left along this exhaust line. The middle second holds the
-lateral track at its slowest speed mid-way along the exhaust line, where
-the polished titanium-blue heat tint patina on the metal pipes is most
-visible. Over the final two seconds the camera pulls back smoothly and
-slightly elevates, retreating to a wide low-angle side view of the
-lifted wagon. This is the final chapter so there is no next chapter to
-hand off to, but the end-frame should still be a clean wide neutral
-side view of the full wagon, a calm resting state.
+CAMERA ARC (continuous, no cuts):
+From this opening wide side view, the camera glides smoothly inward
+and downward in one continuous motion, dipping toward the underside
+of the wagon and beginning a slow lateral tracking shot along the
+full underside exhaust line — twin chrome exhaust tips at the rear,
+polished mid-pipe and catback piping running forward toward the
+manifold. The exhaust line moves into the LEFT THIRD of the 16:9
+widescreen frame, running horizontally across the upper portion of
+that left third. The camera tracks horizontally from right to left
+along the exhaust line. Roughly mid-shot, the camera holds the lateral
+track at its slowest speed mid-way along the exhaust line, where the
+polished titanium-blue heat tint patina on the metal pipes is most
+visible. Then the camera reverses its motion, pulling back smoothly
+and slightly elevating, retreating to the wide low-angle side view of
+the lifted wagon.
 
-Strict composition rules that apply to every frame of the shot:
+CLOSING FRAME (the very last frame of the output, equally important as
+the opening frame):
+A wide low-angle side view of the lifted matte black 5-door station
+wagon, compositionally rhyming with the opening frame: full wagon
+visible on the lift, exploded parts around it, dark workshop background.
+This is a clean wide neutral side view — not a close-up, not tight on
+any single part. A calm resting state at the end of the chapter
+sequence.
+
+Composition rules that apply to every frame:
+  • The wagon body silhouette is preserved throughout — long roofline,
+    hatchback, station-wagon proportions. Do not morph the silhouette
+    toward a coupe or sedan.
   • At the lateral tracking moment, the exhaust line stays in the LEFT
     THIRD of the frame running horizontally; the RIGHT TWO-THIRDS remain
     pitch black with subtle haze.
-  • The final frame is a wide neutral side view of the lifted wagon, not
-    a close-up, not centered tightly on any single part.
-  • The wagon's body silhouette is preserved throughout — long
-    roofline, hatchback, station-wagon proportions. Do not morph the
-    silhouette toward a coupe or sedan.
+  • The opening frame and the closing frame are both wide side views of
+    the full wagon, not close-ups. Do not cut directly to the close-up
+    at the start; do not end on a close-up.
 
 Lighting: polished titanium-blue heat tint on the metal pipes during
-the close lateral track; warm copper rim lighting from above throughout;
-deep shadows below.
+the close lateral track; warm copper rim lighting from above throughout
+the wide views; deep shadows below.
 
 Style: premium automotive engineering close-up, shallow depth of field,
 slow-motion 24fps motion blur, hyper-realistic photographic quality.
 
 Constraints: the wagon body stays completely still throughout. Only the
-camera tracks laterally and then pulls back. Do not include people,
-hands, mechanics, tools, lifts visible in the frame, text, captions,
-watermarks, logos, license plates, or UI overlays. Do not generate
-multiple variations of the shot — one output only.
+camera tracks laterally and then pulls back. The motion is a single
+continuous arc with no cuts. Do not include people, hands, mechanics,
+tools, lifts visible in the frame, text, captions, watermarks, logos,
+license plates, or UI overlays. Do not generate multiple variations of
+the shot — one output only.
 ```
 
 ---
