@@ -24,7 +24,7 @@ function clientIp(req: Request): string {
 
 export async function POST(req: Request): Promise<Response> {
   // Same-origin guard
-  if (!isAllowedOrigin(req.headers.get("origin"))) {
+  if (!isAllowedOrigin(req)) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN_ORIGIN" }, { status: 403 });
   }
 

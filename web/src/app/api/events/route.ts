@@ -25,7 +25,7 @@ function clientIp(req: Request): string {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  if (!isAllowedOrigin(req.headers.get("origin"))) {
+  if (!isAllowedOrigin(req)) {
     return new Response(null, { status: 403 });
   }
 
