@@ -32,7 +32,7 @@ export function Navbar() {
           href="#konfigurator"
           className="px-5 py-2 border border-copper-300 text-copper-300 hover:bg-copper-300 hover:text-noir-900 transition text-sm tracking-[0.2em] uppercase"
         >
-          Konfigurera
+          Boka tid
         </a>
       </nav>
     </header>
