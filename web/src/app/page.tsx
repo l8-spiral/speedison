@@ -4,6 +4,12 @@ import { CursorSpotlight } from "@/components/effects/CursorSpotlight";
 import { ParallaxLayer } from "@/components/effects/ParallaxLayer";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { StageChapter, PopsBangsChapter, EmissionsChapter, ExhaustChapter } from "@/components/chapter/chapters";
+import {
+  StagePresentation,
+  PopsPresentation,
+  EmissionsPresentation,
+  ExhaustPresentation,
+} from "@/components/chapter/presentations";
 import { PortfolioGallery } from "@/components/ui/PortfolioGallery";
 import { FAQ } from "@/components/ui/FAQ";
 import { Configurator } from "@/components/configurator/Configurator";
@@ -30,9 +36,13 @@ export default function Home() {
       </ErrorBoundary>
 
       <section id="tjanster">
+        <StagePresentation />
         <StageChapter />
+        <PopsPresentation />
         <PopsBangsChapter />
+        <EmissionsPresentation />
         <EmissionsChapter />
+        <ExhaustPresentation />
         <ExhaustChapter />
       </section>
 

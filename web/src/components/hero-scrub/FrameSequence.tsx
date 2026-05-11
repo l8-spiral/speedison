@@ -106,6 +106,19 @@ export function FrameSequence({ progress, width, config = HERO_SEQUENCE, classNa
       {eagerLinks.map((href) => (
         <link key={href} rel="preload" as="image" href={href} />
       ))}
+      {/* Poster image: shows frame 0 immediately before the canvas has rendered
+          a frame. Without this, the first paint of every scroll-stage was a
+          black canvas until the user scrolled enough to trigger a draw. The
+          canvas sits on top with the same object-cover sizing, so as soon as
+          it draws anything the poster is hidden underneath. */}
+      <img
+        src={pathFor(width, 0)}
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        loading="eager"
+        className={className ?? "absolute inset-0 w-full h-full object-cover"}
+      />
       <canvas
         ref={canvasRef}
         aria-hidden="true"
