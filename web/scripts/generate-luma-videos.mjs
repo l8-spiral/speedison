@@ -6,11 +6,25 @@
 //
 // Usage:
 //   1. Put LUMA_API_KEY in web/.env (get one at https://lumalabs.ai/dream-machine/api/keys)
-//   2. cd web && node scripts/generate-luma-videos.mjs
+//   2. Pick a tier:
+//        cd web && node scripts/generate-luma-videos.mjs --desktop-only
+//          → only the 4 essential desktop chapter clips (~4 credits)
+//        cd web && node scripts/generate-luma-videos.mjs
+//          → all 9 clips (~9 credits on ray-flash-2; ~30+ on ray-2)
 //   3. Walk away — total runtime ~5–15 min depending on Luma queue
+//
+// CLI flags:
+//   --desktop-only           Only 16:9 chapter clips. Mobile clips fall
+//                            back to a static frame (cheaper for trial).
+//   --model=ray-flash-2|ray-2 Pick model. Default ray-flash-2 (cheap).
+//   --dry-run                Print what would be generated, no API calls.
 //
 // Re-runs are idempotent: clips that already exist on disk are skipped.
 // To regenerate a specific clip, delete its file from /scener/ first.
+//
+// Credit cost (approx, verify in your Luma dashboard):
+//   ray-flash-2 5s   ≈ 1 credit/clip   — recommended for trial (30 cr)
+//   ray-2 5s         ≈ 9 credits/clip  — better quality, blows the trial
 //
 // Notes:
 // - Each clip is generated independently. If one fails, the script moves
@@ -49,8 +63,21 @@ function loadEnv() {
 loadEnv();
 
 const LUMA_API_KEY = process.env.LUMA_API_KEY;
-if (!LUMA_API_KEY) {
+
+// ---- CLI args ----
+const args = process.argv.slice(2);
+const desktopOnly = args.includes("--desktop-only");
+const dryRun = args.includes("--dry-run");
+const modelArg = args.find((a) => a.startsWith("--model="));
+const MODEL = modelArg ? modelArg.slice("--model=".length) : "ray-flash-2";
+
+// Approximate credit cost per clip — verify in your Luma dashboard. Used only
+// for the pre-run estimate; doesn't affect what the API charges.
+const CREDIT_COST = { "ray-flash-2": 1, "ray-2": 9, "ray-1-6": 0.5 };
+
+if (!dryRun && !LUMA_API_KEY) {
   console.error("Missing LUMA_API_KEY — add it to web/.env or export it before running.");
+  console.error("(Or use --dry-run to preview what would be generated.)");
   process.exit(1);
 }
 
@@ -120,7 +147,7 @@ async function startGeneration(clip) {
     body: JSON.stringify({
       prompt: clip.prompt,
       aspect_ratio: clip.aspect_ratio,
-      model: "ray-2",
+      model: MODEL,
       loop: false,
     }),
   });
@@ -197,11 +224,29 @@ function formatBytes(n) {
 async function main() {
   mkdirSync(scenerDir, { recursive: true });
 
-  console.log(`Generating ${CLIPS.length} clips → ${scenerDir}`);
-  console.log(`(skips files that already exist; delete a file in scener/ to regenerate)\n`);
+  // Filter to a subset if the user asked for one.
+  const queue = desktopOnly
+    ? CLIPS.filter((c) => c.filename.includes("-16x9.mp4"))
+    : CLIPS;
+
+  // Pre-run summary so the user sees credit impact before committing.
+  const perClip = CREDIT_COST[MODEL] ?? "?";
+  const totalCredits = typeof perClip === "number" ? perClip * queue.length : "?";
+  console.log(`Plan:`);
+  console.log(`  Model:    ${MODEL}  (≈ ${perClip} credit${perClip === 1 ? "" : "s"} per clip)`);
+  console.log(`  Clips:    ${queue.length}${desktopOnly ? " (desktop-only)" : ""}`);
+  console.log(`  Est cost: ≈ ${totalCredits} credit${totalCredits === 1 ? "" : "s"} (verify in Luma dashboard)`);
+  console.log(`  Output:   ${scenerDir}`);
+  console.log(`  (skips files that already exist; delete a file to regenerate)\n`);
+
+  if (dryRun) {
+    console.log(`[--dry-run] No API calls. Queue:`);
+    for (const c of queue) console.log(`  - ${c.filename}  [${c.aspect_ratio}]`);
+    return;
+  }
 
   const results = [];
-  for (const clip of CLIPS) {
+  for (const clip of queue) {
     try {
       const r = await generateOne(clip);
       results.push({ filename: clip.filename, ...r });
