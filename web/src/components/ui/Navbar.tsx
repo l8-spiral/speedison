@@ -25,7 +25,6 @@ export function Navbar() {
         </Link>
         <ul className="hidden md:flex gap-8 text-sm tracking-[0.2em] uppercase text-stone-300">
           <li><a href="#tjanster" className="hover:text-copper-300">Tjänster</a></li>
-          <li><a href="#galleri" className="hover:text-copper-300">Galleri</a></li>
           <li><a href="#konfigurator" className="hover:text-copper-300">Offert</a></li>
           <li><Link href="/kontakt" className="hover:text-copper-300">Kontakt</Link></li>
         </ul>

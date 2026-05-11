@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { RequestQuoteButton } from "./RequestQuoteButton";
+import type { ServiceSlug } from "@/lib/pricing";
 
 // A short "what / how / time / result" panel that sits between two
 // scroll-scrubbed chapters. Its job is two-fold: it gives the visitor a
@@ -18,11 +20,14 @@ type Props = {
   title: string;
   intro: string;
   items: PresentationItem[];
+  /** Service slugs the "Begär offert" button at the bottom of the panel
+   *  should pre-select in the configurator. */
+  serviceSlugs: readonly ServiceSlug[];
   /** Optional small icon/glyph or anything else to anchor the eye. */
   accent?: ReactNode;
 };
 
-export function ChapterPresentation({ eyebrow, title, intro, items, accent }: Props) {
+export function ChapterPresentation({ eyebrow, title, intro, items, serviceSlugs, accent }: Props) {
   return (
     <section className="relative bg-noir-950 py-20 md:py-28 px-6 md:px-12">
       {/* hairline + copper marker — the "color break" */}
@@ -60,6 +65,10 @@ export function ChapterPresentation({ eyebrow, title, intro, items, accent }: Pr
             </div>
           ))}
         </dl>
+
+        <div className="mt-10">
+          <RequestQuoteButton serviceSlugs={serviceSlugs} />
+        </div>
       </div>
     </section>
   );

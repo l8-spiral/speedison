@@ -11,6 +11,7 @@ import {
   type FrameWidth,
 } from "@/lib/frames";
 import type { ServiceSlug } from "@/lib/pricing";
+import { RequestQuoteButton } from "./RequestQuoteButton";
 
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
 
@@ -121,13 +122,7 @@ export function ChapterScrub(p: Props) {
             </ul>
           )}
           <div className="mt-8">
-            <a
-              href="#konfigurator"
-              data-services={p.serviceSlugs.join(",")}
-              className="inline-block px-6 py-3 border border-copper-300 text-copper-300 hover:bg-copper-300 hover:text-noir-900 transition text-sm tracking-[0.2em] uppercase"
-            >
-              Begär offert
-            </a>
+            <RequestQuoteButton serviceSlugs={p.serviceSlugs} />
           </div>
         </motion.div>
       </div>

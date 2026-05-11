@@ -10,7 +10,6 @@ import {
   EmissionsPresentation,
   ExhaustPresentation,
 } from "@/components/chapter/presentations";
-import { PortfolioGallery } from "@/components/ui/PortfolioGallery";
 import { FAQ } from "@/components/ui/FAQ";
 import { Configurator } from "@/components/configurator/Configurator";
 import { useConfiguratorStore } from "@/components/configurator/store";
@@ -46,7 +45,6 @@ export default function Home() {
         <ExhaustChapter />
       </section>
 
-      <PortfolioGallery />
       <Configurator />
       <FAQ />
     </main>

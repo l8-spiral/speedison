@@ -5,6 +5,7 @@ import { SmoothScroll } from "@/components/lenis/SmoothScroll";
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
 import { SoundToggle } from "@/components/ui/SoundToggle";
+import { SweprogBadge } from "@/components/ui/SweprogBadge";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -82,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <Navbar />
         <SoundToggle />
+        <SweprogBadge />
         <SmoothScroll>
           {children}
           <Footer />

@@ -32,6 +32,7 @@ export function StagePresentation() {
             "+30 till +100 hk beroende på modell. Mjukare gasrespons, snabbare igångdragning, ofta lägre förbrukning vid normal körning.",
         },
       ]}
+      serviceSlugs={["stage1", "stage2"]}
     />
   );
 }
@@ -63,6 +64,7 @@ export function PopsPresentation() {
             "Personlighet i avgasljudet. Påverkar inte motorns hälsa när det är rätt gjort — vi håller smällarna inom säkra parametrar.",
         },
       ]}
+      serviceSlugs={["popsBangs"]}
     />
   );
 }
@@ -95,6 +97,7 @@ export function EmissionsPresentation() {
             "Inga fellampor från de borttagna systemen. Ofta lägre förbrukning och längre livslängd på dyrare komponenter.",
         },
       ]}
+      serviceSlugs={["egrOff", "dpfOff", "adblueOff", "noxOff"]}
     />
   );
 }
@@ -127,6 +130,7 @@ export function ExhaustPresentation() {
             "Djupare ljud, bättre flöde, +5–15 hk i de flesta fall, viktreduktion och en synlig uppgradering bakifrån.",
         },
       ]}
+      serviceSlugs={["exhaust"]}
     />
   );
 }
