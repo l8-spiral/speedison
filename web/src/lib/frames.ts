@@ -101,7 +101,14 @@ export function getChapterSequence(
   slug: ChapterSlug,
   aspect: ChapterAspect
 ): FrameSequenceConfig | undefined {
-  return CHAPTER_SEQUENCES[`${slug}-${aspect}`];
+  const exact = CHAPTER_SEQUENCES[`${slug}-${aspect}`];
+  if (exact) return exact;
+  // Mobile preview: when a portrait 9x16 clip hasn't been generated yet,
+  // fall back to the landscape 16x9 version. object-cover on the canvas
+  // will crop the sides to fill a portrait viewport — not ideal long
+  // term, but lets us see chapter scrubs on mobile before regenerating.
+  if (aspect === "9x16") return CHAPTER_SEQUENCES[`${slug}-16x9`];
+  return undefined;
 }
 
 // ----------------------------------------------------------------------
